@@ -28,10 +28,7 @@ const actionCards = doc.getArray('action')
 // Use custom signaling server if configured, otherwise fallback to public servers
 const SIGNALING_SERVERS = import.meta.env.VITE_SIGNALING_URL
     ? [import.meta.env.VITE_SIGNALING_URL]
-    : [
-        'wss://y-webrtc-eu.fly.dev',
-        'wss://signaling.yjs.dev',
-    ]
+    : []
 
 // Retry configuration
 const RETRY_CONFIG = {
