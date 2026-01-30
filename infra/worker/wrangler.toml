@@ -7,7 +7,7 @@ compatibility_date = "2024-01-01"
 name = "SIGNALING_ROOM"
 class_name = "SignalingRoom"
 
-# Migrations for Durable Objects
+# Migrations for Durable Objects (new_sqlite_classes required for free plan)
 [[migrations]]
 tag = "v1"
-new_classes = ["SignalingRoom"]
+new_sqlite_classes = ["SignalingRoom"]
