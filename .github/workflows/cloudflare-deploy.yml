@@ -55,6 +55,10 @@ jobs:
           VITE_SIGNALING_URL: ${{ needs.deploy-worker.outputs.worker_url }}
         run: npm run build
 
+      - name: Create Pages project if needed
+        run: |
+          npx wrangler pages project create retro-board --production-branch=main 2>/dev/null || echo "Project already exists"
+
       - name: Deploy to Cloudflare Pages
         id: pages-deploy
         run: |
