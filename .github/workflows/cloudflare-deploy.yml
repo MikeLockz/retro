@@ -52,7 +52,7 @@ jobs:
 
       - name: Build frontend
         env:
-          VITE_SIGNALING_URL: ${{ needs.deploy-worker.outputs.worker_url }}
+          VITE_SIGNALING_URL: wss://retro-signaling-server.lockdev.workers.dev
         run: npm run build
 
       - name: Create Pages project if needed
