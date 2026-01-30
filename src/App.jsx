@@ -43,10 +43,14 @@ function App() {
     // Determine status indicator color and icon
     const getStatusIndicator = () => {
         if (connStatus.signaling === 'connected') {
+            const serverName = connStatus.signalingServer
+                ? new URL(connStatus.signalingServer).hostname.split('.')[0]
+                : 'server'
             return {
                 color: 'bg-emerald-400',
                 icon: <Wifi className="w-4 h-4 text-emerald-400" />,
-                text: 'Connected',
+                text: `Signaling: ${serverName}`,
+                tooltip: connStatus.signalingServer || 'Connected',
                 textColor: 'text-emerald-400',
             }
         }
@@ -54,7 +58,8 @@ function App() {
             return {
                 color: 'bg-red-400',
                 icon: <WifiOff className="w-4 h-4 text-red-400" />,
-                text: 'Offline',
+                text: 'No servers',
+                tooltip: 'All signaling servers are unreachable',
                 textColor: 'text-red-400',
             }
         }
@@ -63,13 +68,15 @@ function App() {
                 color: 'bg-amber-400',
                 icon: <RefreshCw className="w-4 h-4 text-amber-400 animate-spin" />,
                 text: `Retry ${connStatus.retryAttempt}/5`,
+                tooltip: 'Reconnecting to signaling server...',
                 textColor: 'text-amber-400',
             }
         }
         return {
             color: 'bg-amber-400 animate-pulse',
             icon: <Wifi className="w-4 h-4 text-amber-400" />,
-            text: 'Connecting...',
+            text: 'Checking servers...',
+            tooltip: 'Testing signaling server connectivity',
             textColor: 'text-amber-400',
         }
     }
@@ -93,7 +100,7 @@ function App() {
 
                     <div className="flex items-center gap-4">
                         {/* Signaling status */}
-                        <div className={`flex items-center gap-2 text-sm ${status.textColor}`} title={`Signaling: ${connStatus.signaling}`}>
+                        <div className={`flex items-center gap-2 text-sm ${status.textColor}`} title={status.tooltip}>
                             {status.icon}
                             <span className="hidden sm:inline">{status.text}</span>
                         </div>

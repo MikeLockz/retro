@@ -43,6 +43,7 @@ let retryTimeout = null
 // Connection status tracking
 const connectionStatus = {
     signaling: 'connecting', // 'connected', 'connecting', 'disconnected', 'failed'
+    signalingServer: null,   // which server is connected
     synced: false,
     retrying: false,
     retryAttempt: 0,
@@ -56,6 +57,7 @@ const connectionStatus = {
     getStatus() {
         return {
             signaling: this.signaling,
+            signalingServer: this.signalingServer,
             synced: this.synced,
             retrying: this.retrying,
             retryAttempt: this.retryAttempt,
@@ -68,6 +70,54 @@ const connectionStatus = {
         return () => this.listeners.delete(fn)
     },
 }
+
+// Check if a signaling server is reachable via WebSocket
+function checkSignalingServer(url, timeout = 5000) {
+    return new Promise((resolve) => {
+        const ws = new WebSocket(url)
+        const timer = setTimeout(() => {
+            ws.close()
+            resolve({ url, connected: false, error: 'timeout' })
+        }, timeout)
+
+        ws.onopen = () => {
+            clearTimeout(timer)
+            ws.close()
+            resolve({ url, connected: true })
+        }
+
+        ws.onerror = () => {
+            clearTimeout(timer)
+            ws.close()
+            resolve({ url, connected: false, error: 'connection failed' })
+        }
+    })
+}
+
+// Check all signaling servers and update status
+async function checkSignalingConnectivity() {
+    connectionStatus.update({ signaling: 'connecting', signalingServer: null })
+
+    for (const serverUrl of SIGNALING_SERVERS) {
+        console.log(`[signaling] Checking ${serverUrl}...`)
+        const result = await checkSignalingServer(serverUrl)
+
+        if (result.connected) {
+            console.log(`[signaling] ✓ Connected to ${serverUrl}`)
+            connectionStatus.update({ signaling: 'connected', signalingServer: serverUrl })
+            return true
+        } else {
+            console.warn(`[signaling] ✗ Failed to connect to ${serverUrl}: ${result.error}`)
+        }
+    }
+
+    console.error('[signaling] All signaling servers are unreachable')
+    connectionStatus.update({ signaling: 'failed', signalingServer: null })
+    return false
+}
+
+// Run initial connectivity check
+checkSignalingConnectivity()
 
 // Create WebRTC provider with retry logic
 function createWebrtcProvider() {
