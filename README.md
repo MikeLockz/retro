@@ -2,7 +2,7 @@
 
 A **local-first, real-time collaborative retrospective board** that works entirely in the browser. No servers, no signups - just share a link and start collaborating.
 
-🚀 **[Try it live](https://mikelockz.github.io/retro/)**
+
 
 ![Screenshot](https://img.shields.io/badge/React-18-blue) ![Yjs](https://img.shields.io/badge/Yjs-CRDT-green) ![WebRTC](https://img.shields.io/badge/WebRTC-P2P-orange)
 
@@ -17,12 +17,42 @@ A **local-first, real-time collaborative retrospective board** that works entire
 
 ## How It Works
 
-```
-┌─────────────┐     WebRTC      ┌─────────────┐
-│  Browser A  │◄───────────────►│  Browser B  │
-│   (Yjs)     │                 │   (Yjs)     │
-│ IndexedDB   │                 │ IndexedDB   │
-└─────────────┘                 └─────────────┘
+```mermaid
+graph TD
+    subgraph Cloudflare [Cloudflare Network]
+        Pages[Cloudflare Pages<br/>Static Assets]
+        Worker[Worker + Durable Objects<br/>Signaling Server]
+    end
+
+    subgraph DeviceA [User A Device]
+        BrowserA[Browser A]
+        DB_A[(IndexedDB)]
+        BrowserA --- DB_A
+    end
+
+    subgraph DeviceB [User B Device]
+        BrowserB[Browser B]
+        DB_B[(IndexedDB)]
+        BrowserB --- DB_B
+    end
+
+    %% Data Flow
+    BrowserA -->|HTTPS| Pages
+    BrowserB -->|HTTPS| Pages
+    
+    BrowserA -.->|WebSocket| Worker
+    BrowserB -.->|WebSocket| Worker
+    
+    BrowserA <-->|WebRTC P2P| BrowserB
+
+    %% Styling
+    classDef cloud fill:#f38020,stroke:#333,stroke-width:2px,color:white;
+    classDef device fill:#e1f5fe,stroke:#333,stroke-width:2px;
+    classDef browser fill:#fff,stroke:#333,stroke-width:1px;
+    
+    class Pages,Worker cloud;
+    class DeviceA,DeviceB device;
+    class BrowserA,BrowserB browser;
 ```
 
 1. Open the app - a unique room URL is generated
@@ -37,6 +67,8 @@ A **local-first, real-time collaborative retrospective board** that works entire
 | [Yjs](https://yjs.dev/) | CRDT engine for conflict-free merging |
 | [y-webrtc](https://github.com/yjs/y-webrtc) | P2P sync via WebRTC |
 | [y-indexeddb](https://github.com/yjs/y-indexeddb) | Browser persistence |
+| [Cloudflare Workers](https://workers.cloudflare.com/) | Serverless signaling infrastructure |
+| [Durable Objects](https://developers.cloudflare.com/durable-objects/) | State management for signaling rooms |
 | React + Vite | UI framework |
 | Tailwind CSS | Styling |
 
@@ -51,10 +83,33 @@ npm run dev
 
 # Build for production
 npm run build
-
-# Deploy to GitHub Pages
-npm run deploy
 ```
+
+## Self-Hosting Signaling Server
+
+The project uses a custom Cloudflare Worker for WebRTC signaling instead of the public Yjs signaling servers.
+
+1. Navigate to the worker directory:
+   ```bash
+   cd infra/worker
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Deploy to Cloudflare:
+   ```bash
+   npx wrangler deploy
+   ```
+
+4. Configure the client to use your worker:
+   - Create a `.env` file in the project root
+   - Add your worker URL:
+     ```
+     VITE_SIGNALING_URL=wss://your-worker-name.your-subdomain.workers.dev
+     ```
 
 ## License
 

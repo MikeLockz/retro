@@ -199,7 +199,7 @@ const indexeddbProvider = new IndexeddbPersistence(roomName, doc)
 
 // Generate user identity
 const userId = crypto.randomUUID()
-const userName = `Anonymous ${getRandomAnimal()}`
+const userName = getRandomAnimal()
 const userColor = getRandomColor()
 
 // Set initial awareness state
