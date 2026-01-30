@@ -1,0 +1,15 @@
+{
+    "name": "retro-signaling-worker",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "wrangler dev",
+        "build": "esbuild src/index.js --bundle --outfile=dist/index.js --format=esm --minify",
+        "deploy": "wrangler deploy"
+    },
+    "devDependencies": {
+        "esbuild": "^0.20.0",
+        "wrangler": "^3.0.0"
+    }
+}
