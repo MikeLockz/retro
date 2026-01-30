@@ -56,17 +56,14 @@ jobs:
         run: npm run build
 
       - name: Deploy to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: retro-board
-          directory: dist
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+        id: pages-deploy
+        run: |
+          npx wrangler pages deploy dist --project-name=retro-board --commit-dirty=true
+          echo "pages_url=https://retro-board.pages.dev" >> $GITHUB_OUTPUT
 
       - name: Output deployment URLs
         run: |
           echo "## 🚀 Deployment Complete" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "- **Signaling Worker:** \`${{ needs.deploy-worker.outputs.worker_url }}\`" >> $GITHUB_STEP_SUMMARY
-          echo "- **Frontend:** Check Cloudflare Pages dashboard" >> $GITHUB_STEP_SUMMARY
+          echo "- **Frontend:** https://retro-board.pages.dev" >> $GITHUB_STEP_SUMMARY
