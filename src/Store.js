@@ -24,9 +24,120 @@ const goodCards = doc.getArray('good')
 const improveCards = doc.getArray('improve')
 const actionCards = doc.getArray('action')
 
+// Signaling servers (ordered by reliability)
+const SIGNALING_SERVERS = [
+    'wss://y-webrtc-eu.fly.dev',
+    'wss://signaling.yjs.dev',
+]
+
+// Retry configuration
+const RETRY_CONFIG = {
+    maxRetries: 5,
+    baseDelay: 1000,  // 1 second
+    maxDelay: 30000,  // 30 seconds
+}
+
+let retryCount = 0
+let retryTimeout = null
+
+// Connection status tracking
+const connectionStatus = {
+    signaling: 'connecting', // 'connected', 'connecting', 'disconnected', 'failed'
+    synced: false,
+    retrying: false,
+    retryAttempt: 0,
+    listeners: new Set(),
+
+    update(changes) {
+        Object.assign(this, changes)
+        this.listeners.forEach(fn => fn(this.getStatus()))
+    },
+
+    getStatus() {
+        return {
+            signaling: this.signaling,
+            synced: this.synced,
+            retrying: this.retrying,
+            retryAttempt: this.retryAttempt,
+        }
+    },
+
+    subscribe(fn) {
+        this.listeners.add(fn)
+        fn(this.getStatus()) // Immediate callback with current status
+        return () => this.listeners.delete(fn)
+    },
+}
+
+// Create WebRTC provider with retry logic
+function createWebrtcProvider() {
+    const provider = new WebrtcProvider(roomName, doc, {
+        signaling: SIGNALING_SERVERS,
+    })
+
+    // Monitor connection status
+    provider.on('status', ({ connected }) => {
+        if (connected) {
+            console.log('[y-webrtc] Connected to signaling server')
+            retryCount = 0
+            connectionStatus.update({ signaling: 'connected', retrying: false, retryAttempt: 0 })
+        } else {
+            console.warn('[y-webrtc] Disconnected from signaling server')
+            connectionStatus.update({ signaling: 'disconnected' })
+        }
+    })
+
+    // Track sync status
+    provider.on('synced', ({ synced }) => {
+        if (synced) {
+            console.log('[y-webrtc] Synced with peers')
+        }
+        connectionStatus.update({ synced })
+    })
+
+    return provider
+}
+
+// Retry connection with exponential backoff
+function scheduleRetry() {
+    if (retryCount >= RETRY_CONFIG.maxRetries) {
+        console.error('[y-webrtc] Max retries reached. Using local-only mode.')
+        connectionStatus.update({ signaling: 'failed', retrying: false })
+        return
+    }
+
+    const delay = Math.min(
+        RETRY_CONFIG.baseDelay * Math.pow(2, retryCount),
+        RETRY_CONFIG.maxDelay
+    )
+
+    console.log(`[y-webrtc] Retrying connection in ${delay / 1000}s (attempt ${retryCount + 1}/${RETRY_CONFIG.maxRetries})`)
+    connectionStatus.update({ retrying: true, retryAttempt: retryCount + 1 })
+
+    retryTimeout = setTimeout(() => {
+        retryCount++
+        try {
+            webrtcProvider.connect()
+        } catch (e) {
+            console.error('[y-webrtc] Retry failed:', e)
+            scheduleRetry()
+        }
+    }, delay)
+}
+
 // Set up WebRTC provider for P2P sync
-const webrtcProvider = new WebrtcProvider(roomName, doc, {
-    signaling: ['wss://signaling.yjs.dev', 'wss://y-webrtc-signaling-eu.herokuapp.com', 'wss://y-webrtc-signaling-us.herokuapp.com'],
+let webrtcProvider = createWebrtcProvider()
+
+// Watch for disconnection and schedule retry
+webrtcProvider.on('status', ({ connected }) => {
+    if (!connected && retryCount < RETRY_CONFIG.maxRetries) {
+        scheduleRetry()
+    }
+})
+
+// Cleanup retry timeout on page unload
+window.addEventListener('beforeunload', () => {
+    if (retryTimeout) clearTimeout(retryTimeout)
 })
 
 // Set up IndexedDB for local persistence
@@ -141,6 +252,9 @@ export const store = {
     // Providers (for cleanup)
     webrtcProvider,
     indexeddbProvider,
+
+    // Connection status
+    connectionStatus,
 }
 
 export default store

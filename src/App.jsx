@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Copy, Check, Users, Sparkles } from 'lucide-react'
+import { Copy, Check, Users, Sparkles, Wifi, WifiOff, RefreshCw } from 'lucide-react'
 import store from './Store'
 import Column from './components/Column'
 import Presence from './components/Presence'
@@ -9,8 +9,14 @@ function App() {
     const [copied, setCopied] = useState(false)
     const [isConnected, setIsConnected] = useState(false)
     const [peerCount, setPeerCount] = useState(0)
+    const [connStatus, setConnStatus] = useState({ signaling: 'connecting', synced: false, retrying: false })
 
-    // Track connection status and peer count
+    // Track connection status
+    useEffect(() => {
+        return store.connectionStatus.subscribe(setConnStatus)
+    }, [])
+
+    // Track peer count
     useEffect(() => {
         const updatePeerCount = () => {
             const states = store.awareness.getStates()
@@ -34,6 +40,42 @@ function App() {
 
     const shareUrl = window.location.href
 
+    // Determine status indicator color and icon
+    const getStatusIndicator = () => {
+        if (connStatus.signaling === 'connected') {
+            return {
+                color: 'bg-emerald-400',
+                icon: <Wifi className="w-4 h-4 text-emerald-400" />,
+                text: 'Connected',
+                textColor: 'text-emerald-400',
+            }
+        }
+        if (connStatus.signaling === 'failed') {
+            return {
+                color: 'bg-red-400',
+                icon: <WifiOff className="w-4 h-4 text-red-400" />,
+                text: 'Offline',
+                textColor: 'text-red-400',
+            }
+        }
+        if (connStatus.retrying) {
+            return {
+                color: 'bg-amber-400',
+                icon: <RefreshCw className="w-4 h-4 text-amber-400 animate-spin" />,
+                text: `Retry ${connStatus.retryAttempt}/5`,
+                textColor: 'text-amber-400',
+            }
+        }
+        return {
+            color: 'bg-amber-400 animate-pulse',
+            icon: <Wifi className="w-4 h-4 text-amber-400" />,
+            text: 'Connecting...',
+            textColor: 'text-amber-400',
+        }
+    }
+
+    const status = getStatusIndicator()
+
     return (
         <div className="min-h-screen flex flex-col">
             {/* Header */}
@@ -50,9 +92,15 @@ function App() {
                     </div>
 
                     <div className="flex items-center gap-4">
-                        {/* Connection status */}
+                        {/* Signaling status */}
+                        <div className={`flex items-center gap-2 text-sm ${status.textColor}`} title={`Signaling: ${connStatus.signaling}`}>
+                            {status.icon}
+                            <span className="hidden sm:inline">{status.text}</span>
+                        </div>
+
+                        {/* Peer count */}
                         <div className="flex items-center gap-2 text-sm text-white/60">
-                            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-gray-500'}`} />
+                            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-400' : 'bg-gray-500'}`} />
                             <Users className="w-4 h-4" />
                             <span>{peerCount} online</span>
                         </div>
