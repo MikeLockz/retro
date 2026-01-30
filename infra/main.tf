@@ -23,10 +23,17 @@ resource "cloudflare_workers_script" "signaling_worker" {
   content    = file("${path.module}/worker/dist/index.js")
   module     = true
 
+  # Durable Object binding
+  bindings {
+    name       = "SIGNALING_ROOM"
+    type       = "durable_object_namespace"
+    class_name = "SignalingRoom"
+  }
+
   # Durable Object migration
-  durable_object_namespace_binding {
-    name         = "SIGNALING_ROOM"
-    class_name   = "SignalingRoom"
+  migrations {
+    tag         = "v1"
+    new_classes = ["SignalingRoom"]
   }
 }
 
