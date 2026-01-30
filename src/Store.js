@@ -24,11 +24,15 @@ const goodCards = doc.getArray('good')
 const improveCards = doc.getArray('improve')
 const actionCards = doc.getArray('action')
 
-// Signaling servers (ordered by reliability)
-// Use custom signaling server if configured, otherwise fallback to public servers
+const DEFAULT_SIGNALING_SERVERS = [
+    'wss://signaling.yjs.dev',
+    'wss://y-webrtc-signaling-eu.herokuapp.com',
+    'wss://y-webrtc-signaling-us.herokuapp.com'
+]
+
 const SIGNALING_SERVERS = import.meta.env.VITE_SIGNALING_URL
     ? [import.meta.env.VITE_SIGNALING_URL]
-    : []
+    : DEFAULT_SIGNALING_SERVERS
 
 // Retry configuration
 const RETRY_CONFIG = {
