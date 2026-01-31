@@ -122,8 +122,8 @@ function Card({ card, columnArray, columnKey }) {
                 <button
                     onClick={handleVote}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all ${hasVoted
-                            ? 'bg-indigo-500/30 text-indigo-300 border border-indigo-500/50'
-                            : 'bg-white/5 text-white/50 hover:text-white/80 hover:bg-white/10 border border-transparent'
+                        ? 'bg-indigo-500/30 text-indigo-300 border border-indigo-500/50'
+                        : 'bg-white/5 text-white/50 hover:text-white/80 hover:bg-white/10 border border-transparent'
                         }`}
                 >
                     <ThumbsUp className={`w-4 h-4 ${hasVoted ? 'fill-current' : ''}`} />

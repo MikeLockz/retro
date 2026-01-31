@@ -37,8 +37,8 @@ function Presence() {
                         <div
                             key={user.clientId}
                             className={`flex items-center gap-2 px-3 py-1 rounded-full text-sm transition-all ${user.isLocal
-                                    ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                                    : 'bg-white/5 text-white/70 border border-white/10'
+                                ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                                : 'bg-white/5 text-white/70 border border-white/10'
                                 }`}
                             title={user.isLocal ? 'You' : user.name}
                         >
