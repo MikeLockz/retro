@@ -20,9 +20,16 @@ const doc = new Y.Doc()
 const roomName = getRoomName()
 
 // Create shared arrays for each column
+const kudosCards = doc.getArray('kudos')
 const goodCards = doc.getArray('good')
 const improveCards = doc.getArray('improve')
 const actionCards = doc.getArray('action')
+
+// Shared settings
+const settings = doc.getMap('settings')
+if (!settings.has('maxVotes')) {
+    settings.set('maxVotes', 5)
+}
 
 const DEFAULT_SIGNALING_SERVERS = [
     'wss://signaling.yjs.dev',
@@ -100,52 +107,63 @@ function checkSignalingServer(url, timeout = 5000) {
 
 // Check all signaling servers and update status
 async function checkSignalingConnectivity() {
+    console.log('[signaling] Starting connectivity check...')
     connectionStatus.update({ signaling: 'connecting', signalingServer: null })
 
+    let anyConnected = false
     for (const serverUrl of SIGNALING_SERVERS) {
-        console.log(`[signaling] Checking ${serverUrl}...`)
-        const result = await checkSignalingServer(serverUrl)
-
-        if (result.connected) {
-            console.log(`[signaling] ✓ Connected to ${serverUrl}`)
-            connectionStatus.update({ signaling: 'connected', signalingServer: serverUrl })
-            return true
-        } else {
-            console.warn(`[signaling] ✗ Failed to connect to ${serverUrl}: ${result.error}`)
+        if (!serverUrl) continue
+        console.log(`[signaling] Probing ${serverUrl}...`)
+        try {
+            const result = await checkSignalingServer(serverUrl)
+            if (result.connected) {
+                console.log(`[signaling] ✓ ${serverUrl} is reachable`)
+                anyConnected = true
+                // If we're already connected via WebRTC, don't overwrite with just 'connected'
+                if (connectionStatus.signaling !== 'connected') {
+                    connectionStatus.update({ signaling: 'connected', signalingServer: serverUrl })
+                }
+                break
+            } else {
+                console.warn(`[signaling] ✗ ${serverUrl} unreachable: ${result.error}`)
+            }
+        } catch (e) {
+            console.error(`[signaling] Error probing ${serverUrl}:`, e)
         }
     }
 
-    console.error('[signaling] All signaling servers are unreachable')
-    connectionStatus.update({ signaling: 'failed', signalingServer: null })
-    return false
+    if (!anyConnected) {
+        console.error('[signaling] All signaling servers are unreachable')
+        connectionStatus.update({ signaling: 'failed', signalingServer: null })
+    }
+    return anyConnected
 }
 
-// Run initial connectivity check
-checkSignalingConnectivity()
-
-// Create WebRTC provider with retry logic
+// Set up WebRTC provider with retry logic
 function createWebrtcProvider() {
+    console.log('[y-webrtc] Initializing provider for room:', roomName)
     const provider = new WebrtcProvider(roomName, doc, {
-        signaling: SIGNALING_SERVERS,
+        signaling: SIGNALING_SERVERS.filter(s => !!s),
     })
 
     // Monitor connection status
     provider.on('status', ({ connected }) => {
+        console.log(`[y-webrtc] Status changed: ${connected ? 'connected' : 'disconnected'}`)
         if (connected) {
-            console.log('[y-webrtc] Connected to signaling server')
             retryCount = 0
             connectionStatus.update({ signaling: 'connected', retrying: false, retryAttempt: 0 })
         } else {
-            console.warn('[y-webrtc] Disconnected from signaling server')
             connectionStatus.update({ signaling: 'disconnected' })
         }
+    })
+    
+    provider.on('peers', ({ webrtcPeers, bcPeers }) => {
+        console.log(`[y-webrtc] Peers changed: WebRTC=${webrtcPeers.length}, BC=${bcPeers.length}`)
     })
 
     // Track sync status
     provider.on('synced', ({ synced }) => {
-        if (synced) {
-            console.log('[y-webrtc] Synced with peers')
-        }
+        console.log(`[y-webrtc] Synced: ${synced}`)
         connectionStatus.update({ synced })
     })
 
@@ -181,6 +199,9 @@ function scheduleRetry() {
 
 // Set up WebRTC provider for P2P sync
 let webrtcProvider = createWebrtcProvider()
+
+// Run initial connectivity check
+checkSignalingConnectivity()
 
 // Watch for disconnection and schedule retry
 webrtcProvider.on('status', ({ connected }) => {
@@ -249,6 +270,19 @@ function deleteCard(columnArray, cardId) {
     }
 }
 
+// Helper to count total votes by a user
+function getTotalVotesByUser(userId) {
+    const allCards = [
+        ...kudosCards.toArray(),
+        ...goodCards.toArray(),
+        ...improveCards.toArray(),
+        ...actionCards.toArray(),
+    ]
+    return allCards.reduce((count, card) => {
+        return count + (card.votedBy?.filter(id => id === userId).length || 0)
+    }, 0)
+}
+
 // Helper to vote on a card
 function toggleVote(columnArray, cardId) {
     const cards = columnArray.toArray()
@@ -257,6 +291,15 @@ function toggleVote(columnArray, cardId) {
         const card = cards[index]
         const votedBy = card.votedBy || []
         const hasVoted = votedBy.includes(userId)
+
+        if (!hasVoted) {
+            const maxVotes = settings.get('maxVotes') || 5
+            const currentVotes = getTotalVotesByUser(userId)
+            if (currentVotes >= maxVotes) {
+                alert(`You have reached the maximum of ${maxVotes} votes.`)
+                return
+            }
+        }
 
         const updatedCard = {
             ...card,
@@ -273,13 +316,49 @@ function toggleVote(columnArray, cardId) {
     }
 }
 
-// Set typing state in awareness
+// Helper to set typing state in awareness
 function setTypingState(isTyping, cardId = null) {
     awareness.setLocalStateField('user', {
         ...awareness.getLocalState()?.user,
         isTyping,
         typingCardId: cardId,
     })
+}
+
+// Helper to clear the entire board
+function clearBoard() {
+    if (confirm('Are you sure you want to clear the entire board? This cannot be undone.')) {
+        doc.transact(() => {
+            kudosCards.delete(0, kudosCards.length)
+            goodCards.delete(0, goodCards.length)
+            improveCards.delete(0, improveCards.length)
+            actionCards.delete(0, actionCards.length)
+        })
+    }
+}
+
+// Manual reconnect
+function reconnect() {
+    console.log('[store] Manual reconnect requested')
+    retryCount = 0
+    if (retryTimeout) clearTimeout(retryTimeout)
+    
+    // Disconnect existing
+    try {
+        webrtcProvider.disconnect()
+    } catch (e) {
+        console.warn('Error disconnecting:', e)
+    }
+
+    // Attempt connect
+    setTimeout(() => {
+        try {
+            webrtcProvider.connect()
+            checkSignalingConnectivity()
+        } catch (e) {
+            console.error('Error connecting:', e)
+        }
+    }, 100)
 }
 
 // Export store
@@ -292,9 +371,13 @@ export const store = {
     userColor,
 
     // Column arrays
+    kudosCards,
     goodCards,
     improveCards,
     actionCards,
+    
+    // Settings
+    settings,
 
     // Actions
     createCard,
@@ -302,6 +385,8 @@ export const store = {
     deleteCard,
     toggleVote,
     setTypingState,
+    clearBoard,
+    reconnect,
 
     // Providers (for cleanup)
     webrtcProvider,
@@ -309,6 +394,17 @@ export const store = {
 
     // Connection status
     connectionStatus,
+}
+
+// HMR Cleanup
+if (import.meta.hot) {
+    import.meta.hot.dispose(() => {
+        console.log('[HMR] Cleaning up store...')
+        webrtcProvider.destroy()
+        indexeddbProvider.destroy()
+        connectionStatus.listeners.clear()
+        if (retryTimeout) clearTimeout(retryTimeout)
+    })
 }
 
 export default store

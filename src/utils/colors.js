@@ -24,6 +24,12 @@ export function getRandomColor() {
 
 // Column-specific colors with gradients
 export const columnColors = {
+    kudos: {
+        gradient: 'from-pink-500/20 to-rose-500/20',
+        border: 'border-pink-500/30',
+        header: 'text-pink-400',
+        button: 'bg-pink-500/20 hover:bg-pink-500/30 text-pink-300',
+    },
     good: {
         gradient: 'from-emerald-500/20 to-teal-500/20',
         border: 'border-emerald-500/30',

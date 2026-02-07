@@ -13,6 +13,8 @@ function Column({ title, columnKey, cards, colors }) {
         }
 
         cards.observe(update)
+        update() // Ensure we have the latest data after subscribing
+        
         return () => cards.unobserve(update)
     }, [cards])
 
