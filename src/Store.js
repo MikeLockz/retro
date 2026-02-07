@@ -15,15 +15,23 @@ function getRoomName() {
     return room
 }
 
-// Create the Yjs document
-const doc = new Y.Doc()
-const roomName = getRoomName()
+// Persist state across HMR
+const doc = import.meta.hot?.data.doc || new Y.Doc()
+const roomName = import.meta.hot?.data.roomName || getRoomName()
+
+if (import.meta.hot) {
+    import.meta.hot.data.doc = doc
+    import.meta.hot.data.roomName = roomName
+}
 
 // Create shared arrays for each column
 const kudosCards = doc.getArray('kudos')
 const goodCards = doc.getArray('good')
 const improveCards = doc.getArray('improve')
 const actionCards = doc.getArray('action')
+
+// Shared map for collaborative text editing (Y.Text instances)
+const cardTexts = doc.getMap('cardTexts')
 
 // Local storage for settings defaults
 const SETTINGS_STORAGE_KEY = 'retro-settings-defaults'
@@ -49,6 +57,8 @@ function saveLocalSettings(updates) {
 // Shared settings
 const settings = doc.getMap('settings')
 const localDefaults = getLocalSettings()
+
+export const VOTE_TYPES = ['👍', '❓', '❤️']
 
 if (!settings.has('maxVotes')) {
     settings.set('maxVotes', localDefaults.maxVotes)
@@ -106,7 +116,7 @@ let retryCount = 0
 let retryTimeout = null
 
 // Connection status tracking
-const connectionStatus = {
+const connectionStatus = import.meta.hot?.data.connectionStatus || {
     signaling: 'connecting', // 'connected', 'connecting', 'disconnected', 'failed'
     signalingServer: null,   // which server is connected
     synced: false,
@@ -134,6 +144,10 @@ const connectionStatus = {
         fn(this.getStatus()) // Immediate callback with current status
         return () => this.listeners.delete(fn)
     },
+}
+
+if (import.meta.hot) {
+    import.meta.hot.data.connectionStatus = connectionStatus
 }
 
 // Check if a signaling server is reachable via WebSocket
@@ -246,26 +260,105 @@ function scheduleRetry() {
     }, delay)
 }
 
-// Set up WebRTC provider for P2P sync
-let webrtcProvider = createWebrtcProvider()
+// Migrate existing cards to use Y.Text
+function migrateAllCards() {
+    const allColumns = [kudosCards, goodCards, improveCards, actionCards]
 
-// Run initial connectivity check
-checkSignalingConnectivity()
+    allColumns.forEach(columnArray => {
+        doc.transact(() => {
+            const cards = columnArray.toArray()
+            cards.forEach((card, index) => {
+                if (!card.textId) {
+                    const textId = `text-${card.id}`
+                    const yText = new Y.Text()
+                    if (card.text) {
+                        yText.insert(0, card.text)
+                    }
+                    cardTexts.set(textId, yText)
 
-// Watch for disconnection and schedule retry
-webrtcProvider.on('status', ({ connected }) => {
-    if (!connected && retryCount < RETRY_CONFIG.maxRetries) {
-        scheduleRetry()
+                    const migratedCard = {
+                        ...card,
+                        textId,
+                        isCommitted: true  // Existing cards are committed
+                    }
+                    columnArray.delete(index, 1)
+                    columnArray.insert(index, [migratedCard])
+                }
+            })
+        })
+    })
+}
+
+// Set up providers (persist across HMR)
+let webrtcProvider = import.meta.hot?.data.webrtcProvider
+let indexeddbProvider = import.meta.hot?.data.indexeddbProvider
+
+if (!webrtcProvider) {
+    webrtcProvider = createWebrtcProvider()
+    
+    // Run initial connectivity check only once
+    checkSignalingConnectivity()
+
+    // Watch for disconnection and schedule retry
+    webrtcProvider.on('status', ({ connected }) => {
+        if (!connected && retryCount < RETRY_CONFIG.maxRetries) {
+            scheduleRetry()
+        }
+    })
+
+    if (import.meta.hot) {
+        import.meta.hot.data.webrtcProvider = webrtcProvider
     }
-})
+}
 
-// Cleanup retry timeout on page unload
-window.addEventListener('beforeunload', () => {
-    if (retryTimeout) clearTimeout(retryTimeout)
-})
+if (!indexeddbProvider) {
+    indexeddbProvider = new IndexeddbPersistence(roomName, doc)
+    
+    // Run migration after IndexedDB syncs
+    indexeddbProvider.on('synced', () => {
+        migrateAllCards()
+    })
 
-// Set up IndexedDB for local persistence
-const indexeddbProvider = new IndexeddbPersistence(roomName, doc)
+    if (import.meta.hot) {
+        import.meta.hot.data.indexeddbProvider = indexeddbProvider
+    }
+}
+
+// Cleanup abandoned uncommitted cards after 5 minutes
+function startCleanupTimer() {
+    return setInterval(() => {
+        const allColumns = [kudosCards, goodCards, improveCards, actionCards]
+        const now = Date.now()
+        const THRESHOLD = 5 * 60 * 1000 // 5 minutes
+
+        allColumns.forEach(columnArray => {
+            const cards = columnArray.toArray()
+            cards.forEach((card) => {
+                if (!card.isCommitted && (now - card.createdAt) > THRESHOLD) {
+                    // Check if anyone is currently editing
+                    const states = Array.from(awareness.getStates().values())
+                    const isBeingEdited = states.some(s =>
+                        s.user?.isTyping && s.user?.typingCardId === card.id
+                    )
+
+                    if (!isBeingEdited) {
+                        console.log(`[cleanup] Removing abandoned card: ${card.id}`)
+                        deleteCard(columnArray, card.id)
+                    }
+                }
+            })
+        })
+    }, 60000) // Check every minute
+}
+
+// Start cleanup timer only once
+let cleanupInterval = import.meta.hot?.data.cleanupInterval
+if (!cleanupInterval) {
+    cleanupInterval = startCleanupTimer()
+    if (import.meta.hot) {
+        import.meta.hot.data.cleanupInterval = cleanupInterval
+    }
+}
 
 // Generate user identity
 const userId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15)
@@ -283,20 +376,51 @@ awareness.setLocalStateField('user', {
     typingCardId: null,
 })
 
+// Helper to get or create Y.Text for a card
+function getOrCreateCardText(textId) {
+    if (!cardTexts.has(textId)) {
+        cardTexts.set(textId, new Y.Text())
+    }
+    return cardTexts.get(textId)
+}
+
+// Helper to cleanup Y.Text when card is deleted
+function cleanupCardText(textId) {
+    if (cardTexts.has(textId)) {
+        cardTexts.delete(textId)
+    }
+}
+
 // Helper to create a new card
 function createCard(columnArray, text = '') {
-    const card = {
-        id: (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15)),
-        text,
-        votes: 0,
-        votedBy: [],
-        createdBy: userId,
-        createdAt: Date.now(),
-    }
+    const cardId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15)
+    const textId = `text-${cardId}`
+
     doc.transact(() => {
+        // Create Y.Text instance for collaborative editing
+        const yText = new Y.Text()
+        if (text) {
+            yText.insert(0, text)
+        }
+        cardTexts.set(textId, yText)
+
+        // Create card with reference to Y.Text
+        const card = {
+            id: cardId,
+            textId: textId,
+            text: text,  // Legacy field for backward compatibility
+            isCommitted: false,  // Starts in uncommitted state
+            votes: 0,
+            votedBy: [],
+            reactions: {},
+            createdBy: userId,
+            createdAt: Date.now(),
+        }
+
         columnArray.push([card])
     })
-    return card
+
+    return { id: cardId, textId: textId }
 }
 
 // Helper to update a card in an array
@@ -306,6 +430,50 @@ function updateCard(columnArray, cardId, updates) {
         const index = cards.findIndex(c => c.id === cardId)
         if (index !== -1) {
             const updatedCard = { ...cards[index], ...updates }
+            const yText = cardTexts.get(updatedCard.textId)
+            const textContent = yText?.toString() || ''
+
+            // Delete empty cards (no text and no image)
+            if (!textContent.trim() && !updatedCard.image) {
+                if (updatedCard.textId) {
+                    cleanupCardText(updatedCard.textId)
+                }
+                columnArray.delete(index, 1)
+                return
+            }
+
+            columnArray.delete(index, 1)
+            columnArray.insert(index, [updatedCard])
+        }
+    })
+}
+
+// Helper to commit a card (mark as finished editing)
+function commitCard(columnArray, cardId) {
+    doc.transact(() => {
+        const cards = columnArray.toArray()
+        const index = cards.findIndex(c => c.id === cardId)
+        if (index !== -1) {
+            const card = cards[index]
+            const yText = cardTexts.get(card.textId)
+            const textContent = yText?.toString() || ''
+
+            // Delete empty cards instead of committing
+            if (!textContent.trim() && !card.image) {
+                // Clean up Y.Text
+                if (card.textId) {
+                    cleanupCardText(card.textId)
+                }
+                columnArray.delete(index, 1)
+                return
+            }
+
+            const updatedCard = {
+                ...card,
+                isCommitted: true,
+                text: textContent,  // Sync text for legacy compatibility
+                editedAt: Date.now()
+            }
             columnArray.delete(index, 1)
             columnArray.insert(index, [updatedCard])
         }
@@ -318,6 +486,11 @@ function deleteCard(columnArray, cardId) {
         const cards = columnArray.toArray()
         const index = cards.findIndex(c => c.id === cardId)
         if (index !== -1) {
+            const card = cards[index]
+            // Cleanup Y.Text instance
+            if (card.textId) {
+                cleanupCardText(card.textId)
+            }
             columnArray.delete(index, 1)
         }
     })
@@ -332,19 +505,46 @@ function getTotalVotesByUser(userId) {
         ...actionCards.toArray(),
     ]
     return allCards.reduce((count, card) => {
-        return count + (card.votedBy?.filter(id => id === userId).length || 0)
+        let userVotes = 0
+        
+        // Count legacy votes
+        if (card.votedBy?.includes(userId)) {
+            userVotes++
+        }
+        
+        // Count reaction votes
+        if (card.reactions) {
+            Object.values(card.reactions).forEach(userIds => {
+                if (userIds.includes(userId)) {
+                    userVotes++
+                }
+            })
+        }
+        
+        return count + userVotes
     }, 0)
 }
 
 // Helper to vote on a card
-function toggleVote(columnArray, cardId) {
+function toggleVote(columnArray, cardId, emoji = '👍') {
     doc.transact(() => {
         const cards = columnArray.toArray()
         const index = cards.findIndex(c => c.id === cardId)
         if (index !== -1) {
-            const card = cards[index]
-            const votedBy = card.votedBy || []
-            const hasVoted = votedBy.includes(userId)
+            let card = cards[index]
+            
+            // Initialize or copy reactions
+            let reactions = card.reactions ? { ...card.reactions } : {}
+            
+            // Migration: Move legacy votedBy to '👍' reaction
+            if (card.votedBy && card.votedBy.length > 0) {
+                const legacyVotes = card.votedBy
+                reactions['👍'] = [...new Set([...(reactions['👍'] || []), ...legacyVotes])]
+                card = { ...card, votedBy: [] } // Clear legacy
+            }
+
+            const userIdsForEmoji = reactions[emoji] || []
+            const hasVoted = userIdsForEmoji.includes(userId)
 
             if (!hasVoted) {
                 const maxVotes = settings.get('maxVotes') || 5
@@ -355,12 +555,19 @@ function toggleVote(columnArray, cardId) {
                 }
             }
 
+            const newUserIds = hasVoted
+                ? userIdsForEmoji.filter(id => id !== userId)
+                : [...userIdsForEmoji, userId]
+            
+            reactions[emoji] = newUserIds
+            
+            // Calculate total votes for display/legacy compatibility
+            const totalVotes = Object.values(reactions).reduce((sum, arr) => sum + arr.length, 0)
+
             const updatedCard = {
                 ...card,
-                votes: hasVoted ? card.votes - 1 : card.votes + 1,
-                votedBy: hasVoted
-                    ? votedBy.filter(id => id !== userId)
-                    : [...votedBy, userId],
+                votes: totalVotes,
+                reactions,
             }
 
             columnArray.delete(index, 1)
@@ -427,7 +634,10 @@ export const store = {
     goodCards,
     improveCards,
     actionCards,
-    
+
+    // Card texts (Y.Text instances)
+    cardTexts,
+
     // Settings
     settings,
     timer,
@@ -436,6 +646,7 @@ export const store = {
     createCard,
     updateCard,
     deleteCard,
+    commitCard,
     toggleVote,
     setTypingState,
     clearBoard,
@@ -444,6 +655,10 @@ export const store = {
     dismissTimer,
     reconnect,
     saveLocalSettings,
+
+    // Text helpers
+    getOrCreateCardText,
+    cleanupCardText,
 
     // Providers (for cleanup)
     webrtcProvider,
@@ -456,11 +671,17 @@ export const store = {
 // HMR Cleanup
 if (import.meta.hot) {
     import.meta.hot.dispose(() => {
-        webrtcProvider.destroy()
-        indexeddbProvider.destroy()
+        // We only clean up non-persisted things.
+        // If we want to truly destroy on full reload, we can use a different mechanism.
+        // But for HMR we keep doc and providers alive.
         connectionStatus.listeners.clear()
         if (retryTimeout) clearTimeout(retryTimeout)
     })
 }
+
+// Cleanup retry timeout on page unload
+window.addEventListener('beforeunload', () => {
+    if (retryTimeout) clearTimeout(retryTimeout)
+})
 
 export default store

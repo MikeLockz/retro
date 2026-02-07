@@ -328,7 +328,7 @@ function App() {
                             <div className="p-6 space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-white/70 mb-2">
-                                        Max thumbs up per person
+                                        Max votes per person
                                     </label>
                                     <input
                                         type="number"
