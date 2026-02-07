@@ -36,14 +36,18 @@ function Column({ title, columnKey, cards, colors }) {
 
             {/* Cards list */}
             <div className="space-y-3 min-h-[200px]">
-                {cardList.map((card) => (
-                    <Card
-                        key={card.id}
-                        card={card}
-                        columnArray={cards}
-                        columnKey={columnKey}
-                    />
-                ))}
+                {cardList
+                    .filter((card, index, self) => 
+                        index === self.findIndex((t) => t.id === card.id)
+                    )
+                    .map((card) => (
+                        <Card
+                            key={card.id}
+                            card={card}
+                            columnArray={cards}
+                            columnKey={columnKey}
+                        />
+                    ))}
 
                 {cardList.length === 0 && (
                     <div className="text-center py-8 text-white/30">

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Copy, Check, Users, Sparkles, Wifi, WifiOff, RefreshCw, MoreVertical, Trash2, Download, Settings, X } from 'lucide-react'
+import { Copy, Check, Users, Sparkles, Wifi, WifiOff, RefreshCw, MoreVertical, Trash2, Download, Settings, X, Play, Square } from 'lucide-react'
 import store from './Store'
+import TimerToast from './components/TimerToast'
 import Column from './components/Column'
 import Presence from './components/Presence'
 import { columnColors } from './utils/colors'
@@ -13,6 +14,9 @@ function App() {
     const [isMenuOpen, setIsMenuOpen] = useState(false)
     const [isSettingsOpen, setIsSettingsOpen] = useState(false)
     const [maxVotes, setMaxVotes] = useState(store.settings.get('maxVotes') || 5)
+    const [timerEnabled, setTimerEnabled] = useState(store.settings.get('timerEnabled') ?? true)
+    const [timerDuration, setTimerDuration] = useState(store.settings.get('timerDuration') || 5)
+    const [isTimerRunning, setIsTimerRunning] = useState(!!store.timer.get('startedAt'))
     const menuRef = useRef(null)
 
     // Sync settings from Yjs
@@ -20,12 +24,27 @@ function App() {
         const handleSettingsChange = () => {
             const val = store.settings.get('maxVotes')
             if (val !== undefined) setMaxVotes(val)
+
+            const tEnabled = store.settings.get('timerEnabled')
+            if (tEnabled !== undefined) setTimerEnabled(tEnabled)
+            
+            const tDuration = store.settings.get('timerDuration')
+            if (tDuration !== undefined) setTimerDuration(tDuration)
         }
         store.settings.observe(handleSettingsChange)
         handleSettingsChange() // Initial check
         
         return () => store.settings.unobserve(handleSettingsChange)
     }, [store.settings])
+
+    // Track timer state
+    useEffect(() => {
+        const updateTimerState = () => {
+            setIsTimerRunning(!!store.timer.get('startedAt'))
+        }
+        store.timer.observe(updateTimerState)
+        return () => store.timer.unobserve(updateTimerState)
+    }, [store.timer])
 
     // Handle click outside menu
     useEffect(() => {
@@ -83,6 +102,10 @@ function App() {
             } else {
                 col.data.forEach(card => {
                     markdown += `- ${card.text} (${card.votes} votes)\n`
+                    // Include image if present
+                    if (card.image) {
+                        markdown += `  ![image](${card.image})\n`
+                    }
                 })
             }
             markdown += `\n`
@@ -103,11 +126,28 @@ function App() {
     const handleSaveSettings = (e) => {
         e.preventDefault()
         const votes = parseInt(maxVotes)
+        const duration = parseInt(timerDuration)
+
         if (!isNaN(votes) && votes > 0) {
             store.settings.set('maxVotes', votes)
             store.saveLocalSettings({ maxVotes: votes })
-            setIsSettingsOpen(false)
         }
+
+        if (!isNaN(duration) && duration > 0) {
+            store.settings.set('timerDuration', duration)
+        }
+
+        store.settings.set('timerEnabled', timerEnabled)
+        setIsSettingsOpen(false)
+    }
+
+    const toggleTimer = () => {
+        if (isTimerRunning) {
+            store.stopTimer()
+        } else {
+            store.startTimer()
+        }
+        setIsMenuOpen(false)
     }
 
     // Determine status indicator color and icon
@@ -219,6 +259,30 @@ function App() {
                                         <Download className="w-4 h-4" />
                                         Export Markdown
                                     </button>
+
+                                    {timerEnabled && (
+                                        <button
+                                            onClick={toggleTimer}
+                                            className={`w-full flex items-center gap-2 px-4 py-2 text-sm transition-colors ${
+                                                isTimerRunning 
+                                                    ? 'text-red-400 hover:bg-red-500/10' 
+                                                    : 'text-emerald-400 hover:bg-emerald-500/10'
+                                            }`}
+                                        >
+                                            {isTimerRunning ? (
+                                                <>
+                                                    <Square className="w-4 h-4 fill-current" />
+                                                    Stop Timer
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Play className="w-4 h-4 fill-current" />
+                                                    Start Timer
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+
                                     <button
                                         onClick={() => {
                                             setIsSettingsOpen(true)
@@ -279,6 +343,41 @@ function App() {
                                         Limits how many times each participant can vote across the entire board.
                                     </p>
                                 </div>
+
+                                <div className="pt-4 border-t border-white/5">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <label className="text-sm font-medium text-white/70">
+                                            Enable Timer
+                                        </label>
+                                        <button
+                                            type="button"
+                                            onClick={() => setTimerEnabled(!timerEnabled)}
+                                            className={`w-12 h-6 rounded-full transition-colors relative ${
+                                                timerEnabled ? 'bg-indigo-500' : 'bg-white/10'
+                                            }`}
+                                        >
+                                            <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${
+                                                timerEnabled ? 'translate-x-6' : 'translate-x-0'
+                                            }`} />
+                                        </button>
+                                    </div>
+                                    
+                                    {timerEnabled && (
+                                        <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                                            <label className="block text-sm font-medium text-white/70 mb-2">
+                                                Timer Duration (minutes)
+                                            </label>
+                                            <input
+                                                type="number"
+                                                min="1"
+                                                max="60"
+                                                value={timerDuration}
+                                                onChange={(e) => setTimerDuration(e.target.value)}
+                                                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                             <div className="px-6 py-4 bg-white/5 flex justify-end gap-3">
                                 <button
@@ -302,6 +401,8 @@ function App() {
 
             {/* Presence bar */}
             <Presence connStatus={connStatus} />
+            
+            <TimerToast />
 
             {/* Main content - Four columns */}
             <main className="flex-1 p-4 md:p-6">

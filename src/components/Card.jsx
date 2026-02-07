@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
-import { ThumbsUp, Trash2 } from 'lucide-react'
+import { ThumbsUp, Trash2, Image as ImageIcon } from 'lucide-react'
 import store from '../Store'
 
 function Card({ card, columnArray, columnKey }) {
     const [isEditing, setIsEditing] = useState(!card.text)
     const [text, setText] = useState(card.text || '')
     const [typingUser, setTypingUser] = useState(null)
+    const [isProcessingImage, setIsProcessingImage] = useState(false)
     const textareaRef = useRef(null)
 
     // Check if current user has voted
@@ -73,6 +74,72 @@ function Card({ card, columnArray, columnKey }) {
         }
     }
 
+    const handlePaste = async (e) => {
+        console.log('[Card] Paste event triggered', e)
+        console.log('[Card] clipboardData:', e.clipboardData)
+        console.log('[Card] clipboardData.items:', e.clipboardData?.items)
+
+        // CRITICAL: Extract clipboard data SYNCHRONOUSLY before any async operations
+        // Clipboard data is only accessible during the synchronous event handler execution
+        const items = e.clipboardData?.items
+        if (!items) {
+            console.log('[Card] No clipboard items')
+            return
+        }
+
+        // Check for image synchronously
+        let imageFile = null
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i]
+            console.log(`[Card] Item ${i}:`, item.type, item.kind)
+            if (item.type.startsWith('image/')) {
+                imageFile = item.getAsFile()
+                console.log('[Card] Found image file:', imageFile)
+                break
+            }
+        }
+
+        if (!imageFile) {
+            console.log('[Card] No image found in paste, continuing with normal paste')
+            return // No image in paste, continue normal paste
+        }
+
+        e.preventDefault() // Prevent default paste behavior for images
+        console.log('[Card] Image detected, preventing default and processing...')
+
+        try {
+            setIsProcessingImage(true)
+            console.log('[Card] Starting compression...')
+
+            // NOW we can do async operations with the file we already extracted
+            const { compressImage } = await import('../utils/imageCompression')
+            const base64Image = await compressImage(imageFile)
+            console.log('[Card] Compression complete, base64 length:', base64Image.length)
+
+            // Update card with image
+            store.updateCard(columnArray, card.id, {
+                image: base64Image,
+                imageType: imageFile.type
+            })
+
+            setIsProcessingImage(false)
+            console.log('[Card] Image added to card')
+        } catch (error) {
+            setIsProcessingImage(false)
+            console.error('[Card] Error processing image:', error)
+            alert(error.message || 'Failed to process image')
+        }
+    }
+
+    const handleRemoveImage = () => {
+        if (confirm('Remove this image?')) {
+            store.updateCard(columnArray, card.id, {
+                image: null,
+                imageType: null
+            })
+        }
+    }
+
     const handleVote = () => {
         store.toggleVote(columnArray, card.id)
     }
@@ -103,7 +170,8 @@ function Card({ card, columnArray, columnKey }) {
                     onChange={handleTextChange}
                     onBlur={handleBlur}
                     onKeyDown={handleKeyDown}
-                    placeholder="Type your thoughts..."
+                    onPaste={handlePaste}
+                    placeholder="Type your thoughts... (paste images directly)"
                     className="w-full bg-transparent text-white placeholder-white/30 resize-none focus:outline-none min-h-[60px]"
                     rows={3}
                 />
@@ -114,6 +182,35 @@ function Card({ card, columnArray, columnKey }) {
                 >
                     {card.text || <span className="text-white/30 italic">Click to edit...</span>}
                 </p>
+            )}
+
+            {/* Image display */}
+            {card.image && (
+                <div className="mt-3 relative group/image">
+                    <img
+                        src={card.image}
+                        alt="Card attachment"
+                        className="w-full rounded-lg border border-white/10"
+                        loading="lazy"
+                    />
+                    {isEditing && (
+                        <button
+                            onClick={handleRemoveImage}
+                            className="absolute top-2 right-2 p-1.5 rounded-lg bg-red-500/80 hover:bg-red-500 text-white opacity-0 group-hover/image:opacity-100 transition-opacity"
+                            title="Remove image"
+                        >
+                            <Trash2 className="w-4 h-4" />
+                        </button>
+                    )}
+                </div>
+            )}
+
+            {/* Image processing indicator */}
+            {isProcessingImage && (
+                <div className="mt-3 flex items-center gap-2 text-indigo-400 text-sm">
+                    <ImageIcon className="w-4 h-4 animate-pulse" />
+                    <span>Processing image...</span>
+                </div>
             )}
 
             {/* Card actions */}

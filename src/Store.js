@@ -53,6 +53,37 @@ const localDefaults = getLocalSettings()
 if (!settings.has('maxVotes')) {
     settings.set('maxVotes', localDefaults.maxVotes)
 }
+if (!settings.has('timerEnabled')) {
+    settings.set('timerEnabled', true)
+}
+if (!settings.has('timerDuration')) {
+    settings.set('timerDuration', 5)
+}
+
+// Timer state
+const timer = doc.getMap('timer')
+
+function startTimer() {
+    const durationMins = settings.get('timerDuration') || 5
+    doc.transact(() => {
+        timer.set('startedAt', Date.now())
+        timer.set('duration', durationMins * 60 * 1000)
+    })
+}
+
+function stopTimer() {
+    doc.transact(() => {
+        timer.set('startedAt', null)
+        timer.set('duration', null)
+    })
+}
+
+function dismissTimer() {
+    doc.transact(() => {
+        timer.set('startedAt', null)
+        timer.set('duration', null)
+    })
+}
 
 const DEFAULT_SIGNALING_SERVERS = [
     'wss://signaling.yjs.dev',
@@ -242,7 +273,7 @@ window.addEventListener('beforeunload', () => {
 const indexeddbProvider = new IndexeddbPersistence(roomName, doc)
 
 // Generate user identity
-const userId = crypto.randomUUID()
+const userId = crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15)
 const userName = getRandomAnimal()
 const userColor = getRandomColor()
 
@@ -260,37 +291,41 @@ awareness.setLocalStateField('user', {
 // Helper to create a new card
 function createCard(columnArray, text = '') {
     const card = {
-        id: crypto.randomUUID(),
+        id: (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 15)),
         text,
         votes: 0,
         votedBy: [],
         createdBy: userId,
         createdAt: Date.now(),
     }
-    columnArray.push([card])
+    doc.transact(() => {
+        columnArray.push([card])
+    })
     return card
 }
 
 // Helper to update a card in an array
 function updateCard(columnArray, cardId, updates) {
-    const cards = columnArray.toArray()
-    const index = cards.findIndex(c => c.id === cardId)
-    if (index !== -1) {
-        const updatedCard = { ...cards[index], ...updates }
-        doc.transact(() => {
+    doc.transact(() => {
+        const cards = columnArray.toArray()
+        const index = cards.findIndex(c => c.id === cardId)
+        if (index !== -1) {
+            const updatedCard = { ...cards[index], ...updates }
             columnArray.delete(index, 1)
             columnArray.insert(index, [updatedCard])
-        })
-    }
+        }
+    })
 }
 
 // Helper to delete a card
 function deleteCard(columnArray, cardId) {
-    const cards = columnArray.toArray()
-    const index = cards.findIndex(c => c.id === cardId)
-    if (index !== -1) {
-        columnArray.delete(index, 1)
-    }
+    doc.transact(() => {
+        const cards = columnArray.toArray()
+        const index = cards.findIndex(c => c.id === cardId)
+        if (index !== -1) {
+            columnArray.delete(index, 1)
+        }
+    })
 }
 
 // Helper to count total votes by a user
@@ -308,35 +343,35 @@ function getTotalVotesByUser(userId) {
 
 // Helper to vote on a card
 function toggleVote(columnArray, cardId) {
-    const cards = columnArray.toArray()
-    const index = cards.findIndex(c => c.id === cardId)
-    if (index !== -1) {
-        const card = cards[index]
-        const votedBy = card.votedBy || []
-        const hasVoted = votedBy.includes(userId)
+    doc.transact(() => {
+        const cards = columnArray.toArray()
+        const index = cards.findIndex(c => c.id === cardId)
+        if (index !== -1) {
+            const card = cards[index]
+            const votedBy = card.votedBy || []
+            const hasVoted = votedBy.includes(userId)
 
-        if (!hasVoted) {
-            const maxVotes = settings.get('maxVotes') || 5
-            const currentVotes = getTotalVotesByUser(userId)
-            if (currentVotes >= maxVotes) {
-                alert(`You have reached the maximum of ${maxVotes} votes.`)
-                return
+            if (!hasVoted) {
+                const maxVotes = settings.get('maxVotes') || 5
+                const currentVotes = getTotalVotesByUser(userId)
+                if (currentVotes >= maxVotes) {
+                    alert(`You have reached the maximum of ${maxVotes} votes.`)
+                    return
+                }
             }
-        }
 
-        const updatedCard = {
-            ...card,
-            votes: hasVoted ? card.votes - 1 : card.votes + 1,
-            votedBy: hasVoted
-                ? votedBy.filter(id => id !== userId)
-                : [...votedBy, userId],
-        }
+            const updatedCard = {
+                ...card,
+                votes: hasVoted ? card.votes - 1 : card.votes + 1,
+                votedBy: hasVoted
+                    ? votedBy.filter(id => id !== userId)
+                    : [...votedBy, userId],
+            }
 
-        doc.transact(() => {
             columnArray.delete(index, 1)
             columnArray.insert(index, [updatedCard])
-        })
-    }
+        }
+    })
 }
 
 // Helper to set typing state in awareness
@@ -401,6 +436,7 @@ export const store = {
     
     // Settings
     settings,
+    timer,
 
     // Actions
     createCard,
@@ -409,6 +445,9 @@ export const store = {
     toggleVote,
     setTypingState,
     clearBoard,
+    startTimer,
+    stopTimer,
+    dismissTimer,
     reconnect,
     saveLocalSettings,
 
