@@ -75,15 +75,10 @@ function Card({ card, columnArray, columnKey }) {
     }
 
     const handlePaste = async (e) => {
-        console.log('[Card] Paste event triggered', e)
-        console.log('[Card] clipboardData:', e.clipboardData)
-        console.log('[Card] clipboardData.items:', e.clipboardData?.items)
-
         // CRITICAL: Extract clipboard data SYNCHRONOUSLY before any async operations
         // Clipboard data is only accessible during the synchronous event handler execution
         const items = e.clipboardData?.items
         if (!items) {
-            console.log('[Card] No clipboard items')
             return
         }
 
@@ -91,30 +86,24 @@ function Card({ card, columnArray, columnKey }) {
         let imageFile = null
         for (let i = 0; i < items.length; i++) {
             const item = items[i]
-            console.log(`[Card] Item ${i}:`, item.type, item.kind)
             if (item.type.startsWith('image/')) {
                 imageFile = item.getAsFile()
-                console.log('[Card] Found image file:', imageFile)
                 break
             }
         }
 
         if (!imageFile) {
-            console.log('[Card] No image found in paste, continuing with normal paste')
             return // No image in paste, continue normal paste
         }
 
         e.preventDefault() // Prevent default paste behavior for images
-        console.log('[Card] Image detected, preventing default and processing...')
 
         try {
             setIsProcessingImage(true)
-            console.log('[Card] Starting compression...')
 
             // NOW we can do async operations with the file we already extracted
             const { compressImage } = await import('../utils/imageCompression')
             const base64Image = await compressImage(imageFile)
-            console.log('[Card] Compression complete, base64 length:', base64Image.length)
 
             // Update card with image
             store.updateCard(columnArray, card.id, {
@@ -123,7 +112,6 @@ function Card({ card, columnArray, columnKey }) {
             })
 
             setIsProcessingImage(false)
-            console.log('[Card] Image added to card')
         } catch (error) {
             setIsProcessingImage(false)
             console.error('[Card] Error processing image:', error)

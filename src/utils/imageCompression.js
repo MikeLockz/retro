@@ -154,27 +154,19 @@ function fileToBase64(file) {
  * @returns {File|null} - The image file or null if no image found
  */
 export function getImageFromPaste(event) {
-    console.log('[imageCompression] getImageFromPaste called')
     const items = event.clipboardData?.items
-    console.log('[imageCompression] clipboardData.items:', items)
 
     if (!items) {
-        console.log('[imageCompression] No items in clipboard')
         return null
     }
 
-    console.log('[imageCompression] Items length:', items.length)
     for (let i = 0; i < items.length; i++) {
         const item = items[i]
-        console.log(`[imageCompression] Item ${i}:`, item.type, item.kind)
         if (item.type.startsWith('image/')) {
-            console.log('[imageCompression] Found image item, getting file...')
             const file = item.getAsFile()
-            console.log('[imageCompression] Got file:', file)
             return file
         }
     }
 
-    console.log('[imageCompression] No image found in clipboard items')
     return null
 }

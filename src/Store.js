@@ -161,17 +161,14 @@ function checkSignalingServer(url, timeout = 5000) {
 
 // Check all signaling servers and update status
 async function checkSignalingConnectivity() {
-    console.log('[signaling] Starting connectivity check...')
     connectionStatus.update({ signaling: 'connecting', signalingServer: null })
 
     let anyConnected = false
     for (const serverUrl of SIGNALING_SERVERS) {
         if (!serverUrl) continue
-        console.log(`[signaling] Probing ${serverUrl}...`)
         try {
             const result = await checkSignalingServer(serverUrl)
             if (result.connected) {
-                console.log(`[signaling] ✓ ${serverUrl} is reachable`)
                 anyConnected = true
                 // If we're already connected via WebRTC, don't overwrite with just 'connected'
                 if (connectionStatus.signaling !== 'connected') {
@@ -195,7 +192,6 @@ async function checkSignalingConnectivity() {
 
 // Set up WebRTC provider with retry logic
 function createWebrtcProvider() {
-    console.log('[y-webrtc] Initializing provider for room:', roomName)
     const provider = new WebrtcProvider(roomName, doc, {
         signaling: SIGNALING_SERVERS.filter(s => !!s),
     })
@@ -212,12 +208,11 @@ function createWebrtcProvider() {
     })
     
     provider.on('peers', ({ webrtcPeers, bcPeers }) => {
-        console.log(`[y-webrtc] Peers changed: WebRTC=${webrtcPeers.length}, BC=${bcPeers.length}`)
+        // Peer count tracking handled via connectionStatus if needed
     })
 
     // Track sync status
     provider.on('synced', ({ synced }) => {
-        console.log(`[y-webrtc] Synced: ${synced}`)
         connectionStatus.update({ synced })
     })
 
@@ -397,7 +392,6 @@ function clearBoard() {
 
 // Manual reconnect
 function reconnect() {
-    console.log('[store] Manual reconnect requested')
     retryCount = 0
     if (retryTimeout) clearTimeout(retryTimeout)
     
@@ -462,7 +456,6 @@ export const store = {
 // HMR Cleanup
 if (import.meta.hot) {
     import.meta.hot.dispose(() => {
-        console.log('[HMR] Cleaning up store...')
         webrtcProvider.destroy()
         indexeddbProvider.destroy()
         connectionStatus.listeners.clear()
