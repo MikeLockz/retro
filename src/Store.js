@@ -25,10 +25,33 @@ const goodCards = doc.getArray('good')
 const improveCards = doc.getArray('improve')
 const actionCards = doc.getArray('action')
 
+// Local storage for settings defaults
+const SETTINGS_STORAGE_KEY = 'retro-settings-defaults'
+const DEFAULT_SETTINGS = {
+    maxVotes: 5,
+}
+
+function getLocalSettings() {
+    try {
+        const saved = localStorage.getItem(SETTINGS_STORAGE_KEY)
+        return saved ? JSON.parse(saved) : DEFAULT_SETTINGS
+    } catch (e) {
+        return DEFAULT_SETTINGS
+    }
+}
+
+function saveLocalSettings(updates) {
+    const current = getLocalSettings()
+    const updated = { ...current, ...updates }
+    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(updated))
+}
+
 // Shared settings
 const settings = doc.getMap('settings')
+const localDefaults = getLocalSettings()
+
 if (!settings.has('maxVotes')) {
-    settings.set('maxVotes', 5)
+    settings.set('maxVotes', localDefaults.maxVotes)
 }
 
 const DEFAULT_SIGNALING_SERVERS = [
@@ -387,6 +410,7 @@ export const store = {
     setTypingState,
     clearBoard,
     reconnect,
+    saveLocalSettings,
 
     // Providers (for cleanup)
     webrtcProvider,

@@ -105,6 +105,7 @@ function App() {
         const votes = parseInt(maxVotes)
         if (!isNaN(votes) && votes > 0) {
             store.settings.set('maxVotes', votes)
+            store.saveLocalSettings({ maxVotes: votes })
             setIsSettingsOpen(false)
         }
     }
