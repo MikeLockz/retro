@@ -1,5 +1,7 @@
 # RetroBoard 🎯
 
+**Live Demo: [https://retro-board.pages.dev](https://retro-board.pages.dev)**
+
 A **local-first, real-time collaborative retrospective board** that works entirely in the browser. No servers, no signups - just share a link and start collaborating.
 
 
@@ -8,16 +10,11 @@ A **local-first, real-time collaborative retrospective board** that works entire
 
 ## Features
 
-- **✍️ Google Docs-Style Editing** - Multiple users can edit the same card simultaneously with character-by-character real-time syncing
-- **🔄 Real-time P2P Sync** - Changes sync instantly between browsers via WebRTC
-- **💾 Offline Persistence** - Cards saved to IndexedDB, survive page refresh
-- **👤 Anonymous Presence** - See collaborators as "Anonymous Fox", "Anonymous Panda", etc.
-- **⌨️ Live Typing Indicators** - See who's editing each card in real-time
-- **👍 Emoji Voting** - Vote on cards with emoji reactions and vote limits
-- **📸 Image Support** - Paste images directly into cards
-- **⏱️ Session Timer** - Built-in countdown timer for time-boxed retrospectives
-- **🎨 Modern UI** - Glassmorphism design with dark gradient theme
-- **🚫 No Backend** - Everything runs in the browser
+- **Google Docs-Style Editing** - Multiple users can edit the same card simultaneously with character-by-character real-time syncing
+- **Real-time P2P Sync** - Changes sync instantly between browsers via WebRTC
+- **Offline Persistence** - Cards saved to IndexedDB, survive page refresh
+- **Image Support** - Paste images directly into cards
+- **No Backend** - Everything runs in the browser
 
 ## How It Works
 
@@ -75,19 +72,6 @@ RetroBoard uses [Yjs CRDTs](https://yjs.dev/) with `Y.Text` for Google Docs-styl
 - **Auto-Cleanup** - Empty uncommitted cards are automatically removed after 5 minutes of inactivity
 
 **Try it:** Open two browser tabs to the same room, create a card, and start typing in both tabs at the same time!
-
-## Tech Stack
-
-| Technology | Purpose |
-|------------|---------|
-| [Yjs](https://yjs.dev/) | CRDT engine for conflict-free merging and collaborative editing |
-| [Y.Text](https://docs.yjs.dev/api/shared-types/y.text) | CRDT for real-time text collaboration (Google Docs-style) |
-| [y-webrtc](https://github.com/yjs/y-webrtc) | P2P sync via WebRTC |
-| [y-indexeddb](https://github.com/yjs/y-indexeddb) | Browser persistence |
-| [Cloudflare Workers](https://workers.cloudflare.com/) | Serverless signaling infrastructure |
-| [Durable Objects](https://developers.cloudflare.com/durable-objects/) | State management for signaling rooms |
-| React + Vite | UI framework |
-| Tailwind CSS | Styling |
 
 ## Development
 
