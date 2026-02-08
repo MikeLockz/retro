@@ -37,6 +37,7 @@ const cardTexts = doc.getMap('cardTexts')
 const SETTINGS_STORAGE_KEY = 'retro-settings-defaults'
 const DEFAULT_SETTINGS = {
     maxVotes: 5,
+    theme: 'modern',
 }
 
 function getLocalSettings() {

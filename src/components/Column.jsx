@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react'
 import store from '../Store'
 import Card from './Card'
 
-function Column({ title, columnKey, cards, colors }) {
+function Column({ title, columnKey, cards, colors, theme }) {
     const [cardList, setCardList] = useState(() => cards.toArray())
 
     // Subscribe to Yjs array changes with proper caching
@@ -20,6 +20,56 @@ function Column({ title, columnKey, cards, colors }) {
 
     const handleAddCard = () => {
         store.createCard(cards)
+    }
+
+    const isRetro = theme === 'retro'
+
+    if (isRetro) {
+        return (
+            <div className={`p-4 border-r-2 last:border-r-0 border-[#ddd]`}>
+                {/* Column header */}
+                <div className="flex flex-col items-center mb-6 pb-4 border-b-2 border-[#2D1B0E]/10">
+                    <h2 className="text-xl font-black text-[#2D1B0E] uppercase text-center flex flex-col">
+                        {title.split(' ')[0]} 
+                        <span className="text-sm font-normal normal-case opacity-70">
+                            {title.split(' ').slice(1).join(' ')}
+                        </span>
+                    </h2>
+                </div>
+
+                {/* Cards list */}
+                <div className="space-y-6 min-h-[200px]">
+                    {cardList
+                        .filter((card, index, self) => 
+                            index === self.findIndex((t) => t.id === card.id)
+                        )
+                        .map((card) => (
+                            <Card
+                                key={card.id}
+                                card={card}
+                                columnArray={cards}
+                                columnKey={columnKey}
+                                theme={theme}
+                            />
+                        ))}
+
+                    {cardList.length === 0 && (
+                        <div className="text-center py-8 text-[#2D1B0E]/30">
+                            <p className="text-sm italic">Nothing here yet, baby!</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Add card button */}
+                <button
+                    onClick={handleAddCard}
+                    className="w-full mt-8 flex items-center justify-center gap-2 py-4 rounded-none bg-white border-2 border-[#2D1B0E] shadow-[4px_4px_0px_#2D1B0E] hover:translate-y-[-2px] hover:translate-x-[-2px] hover:shadow-[6px_6px_0px_#2D1B0E] transition-all font-bold text-[#2D1B0E]"
+                >
+                    <Plus className="w-5 h-5" />
+                    <span>ADD NOTE, BABY!</span>
+                </button>
+            </div>
+        )
     }
 
     return (
@@ -46,6 +96,7 @@ function Column({ title, columnKey, cards, colors }) {
                             card={card}
                             columnArray={cards}
                             columnKey={columnKey}
+                            theme={theme}
                         />
                     ))}
 

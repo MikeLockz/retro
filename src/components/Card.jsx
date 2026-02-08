@@ -3,7 +3,7 @@ import { Trash2, Image as ImageIcon } from 'lucide-react'
 import store, { VOTE_TYPES } from '../Store'
 import { useYText } from '../hooks/useYText'
 
-function Card({ card, columnArray, columnKey }) {
+function Card({ card, columnArray, columnKey, theme }) {
     // Use Y.Text hook for collaborative editing
     const { yText, text, updateText, isReady } = useYText(card.textId)
 
@@ -113,7 +113,6 @@ function Card({ card, columnArray, columnKey }) {
 
     const handlePaste = async (e) => {
         // CRITICAL: Extract clipboard data SYNCHRONOUSLY before any async operations
-        // Clipboard data is only accessible during the synchronous event handler execution
         const items = e.clipboardData?.items
         if (!items) {
             return
@@ -172,6 +171,148 @@ function Card({ card, columnArray, columnKey }) {
 
     const handleVote = (emoji) => {
         store.toggleVote(columnArray, card.id, emoji)
+    }
+
+    const isRetro = theme === 'retro'
+
+    if (isRetro) {
+        const getRotation = () => {
+            const seed = card.id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+            return (seed % 5) - 2
+        }
+
+        const getNoteColor = () => {
+            switch (columnKey) {
+                case 'kudos': return 'bg-[#EC4899] text-white'
+                case 'good': return 'bg-[#4056F4] text-white'
+                case 'improve': return 'bg-[#FF8C00] text-[#2D1B0E]'
+                case 'action': return 'bg-[#4056F4] text-white'
+                default: return 'bg-white text-[#2D1B0E]'
+            }
+        }
+
+        const rotation = getRotation()
+        const noteColor = getNoteColor()
+
+        return (
+            <div 
+                className={`group relative p-6 retro-sticky ${noteColor} transition-all duration-200 flex flex-col justify-between ${
+                    isEditing 
+                        ? 'scale-105 shadow-2xl z-50 ring-4 ring-[#2D1B0E]/40 brightness-110' 
+                        : 'z-0'
+                }`}
+                style={{ transform: isEditing ? 'none' : `rotate(${rotation}deg)` }}
+                data-card-id={card.id}
+            >
+                {/* Draft indicator for uncommitted cards */}
+                {!card.isCommitted && (
+                    <div className="absolute -top-3 -right-3 px-2 py-1 bg-[#2D1B0E] text-white text-[10px] font-black uppercase tracking-tighter border-2 border-white shadow-md z-10">
+                        Draft
+                    </div>
+                )}
+
+                {/* Typing indicator */}
+                {typingUser && (
+                    <div className="absolute -top-4 left-2 px-2 py-0.5 bg-[#2D1B0E] text-white text-[10px] font-bold flex items-center gap-1 shadow-lg z-10 border border-white">
+                        <span>{typingUser.name}</span>
+                        <span className="flex gap-0.5">
+                            <span className="typing-dot w-1 h-1 bg-white rounded-full" />
+                            <span className="typing-dot w-1 h-1 bg-white rounded-full" />
+                            <span className="typing-dot w-1 h-1 bg-white rounded-full" />
+                        </span>
+                    </div>
+                )}
+
+                {/* Card content */}
+                <div className="flex-1">
+                    {isEditing ? (
+                        <textarea
+                            ref={textareaRef}
+                            value={displayText}
+                            onChange={handleTextChange}
+                            onBlur={handleBlur}
+                            onKeyDown={handleKeyDown}
+                            onKeyUp={updateCursor}
+                            onClick={updateCursor}
+                            onPaste={handlePaste}
+                            placeholder="Type your thoughts, baby!"
+                            className="w-full bg-transparent text-inherit placeholder-current placeholder-opacity-50 resize-none focus:outline-none min-h-[100px] font-bold text-lg leading-tight"
+                            rows={4}
+                        />
+                    ) : (
+                        <p
+                            onClick={() => setIsEditing(true)}
+                            className="text-inherit cursor-text min-h-[100px] whitespace-pre-wrap font-bold text-lg leading-tight break-words"
+                        >
+                            {displayText || <span className="opacity-30 italic">Click to edit...</span>}
+                        </p>
+                    )}
+                </div>
+
+                {/* Image display */}
+                {card.image && (
+                    <div className="mt-4 relative group/image">
+                        <img
+                            src={card.image}
+                            alt="Card attachment"
+                            className="w-full border-2 border-[#2D1B0E] shadow-[4px_4px_0px_rgba(0,0,0,0.1)]"
+                            loading="lazy"
+                        />
+                        {isEditing && (
+                            <button
+                                onClick={handleRemoveImage}
+                                className="absolute top-2 right-2 p-1.5 bg-red-600 text-white border border-white shadow-md opacity-0 group-hover/image:opacity-100 transition-opacity"
+                                title="Remove image"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {/* Image processing indicator */}
+                {isProcessingImage && (
+                    <div className="mt-2 flex items-center gap-2 text-inherit text-xs font-bold animate-pulse">
+                        <ImageIcon className="w-4 h-4" />
+                        <span>GETTING GROOVY...</span>
+                    </div>
+                )}
+
+                {/* Card actions */}
+                <div className="flex items-center justify-between mt-4 pt-4 border-t-2 border-[#2D1B0E]/10">
+                    {/* Vote buttons */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                        {VOTE_TYPES.map(emoji => {
+                            const reactionCount = (card.reactions?.[emoji]?.length || 0) + 
+                                (emoji === '👍' && card.votedBy?.length ? card.votedBy.length : 0)
+                            
+                            const hasReacted = card.reactions?.[emoji]?.includes(store.userId) || 
+                                (emoji === '👍' && card.votedBy?.includes(store.userId))
+
+                            return (
+                                <button
+                                    key={emoji}
+                                    onClick={() => handleVote(emoji)}
+                                    className={`flex items-center gap-1.5 px-2 py-1 transition-all text-xs font-black border-2 ${
+                                        hasReacted
+                                            ? 'bg-[#2D1B0E] text-white border-white'
+                                            : 'bg-white/20 text-current hover:bg-white/40 border-transparent'
+                                    }`}
+                                    title={`Vote ${emoji}`}
+                                >
+                                    <span>{emoji}</span>
+                                    {reactionCount > 0 && <span>{reactionCount}</span>}
+                                </button>
+                            )
+                        })}
+                    </div>
+
+                    <div className="text-[10px] font-black opacity-50 uppercase tracking-widest">
+                        Groovy
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     return (

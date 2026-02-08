@@ -8,13 +8,44 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Retro Theme Colors */
+  --retro-blue: #4056F4;
+  --retro-orange: #FF8C00;
+  --retro-pink: #EC4899;
+  --retro-cream: #FDF5E6;
+  --retro-dark: #2D1B0E;
+  --sunburst-1: #4056F4;
+  --sunburst-2: #FF8C00;
+  --sunburst-3: #EC4899;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
   background-attachment: fixed;
+}
+
+.modern-bg {
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+  color: white;
+}
+
+.retro-bg {
+  background: conic-gradient(
+    var(--sunburst-1) 0deg 30deg, 
+    var(--sunburst-2) 30deg 60deg, 
+    var(--sunburst-3) 60deg 90deg, 
+    var(--sunburst-1) 90deg 120deg, 
+    var(--sunburst-2) 120deg 150deg, 
+    var(--sunburst-3) 150deg 180deg,
+    var(--sunburst-1) 180deg 210deg,
+    var(--sunburst-2) 210deg 240deg,
+    var(--sunburst-3) 240deg 270deg,
+    var(--sunburst-1) 270deg 300deg,
+    var(--sunburst-2) 300deg 330deg,
+    var(--sunburst-3) 330deg 360deg
+  );
 }
 
 /* Custom scrollbar */
@@ -23,26 +54,50 @@ body {
   height: 8px;
 }
 
-::-webkit-scrollbar-track {
+.modern-bg ::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 4px;
 }
 
-::-webkit-scrollbar-thumb {
+.modern-bg ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
 }
 
-::-webkit-scrollbar-thumb:hover {
+.modern-bg ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Glass morphism card effect */
+.retro-bg ::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+}
+
+.retro-bg ::-webkit-scrollbar-thumb {
+  background: var(--retro-dark);
+  border-radius: 4px;
+}
+
+/* Glass morphism card effect (Legacy/Optional) */
 .glass {
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Retro Paper Board */
+.retro-board {
+  background: var(--retro-cream);
+  border: 8px solid var(--retro-dark);
+  box-shadow: 20px 20px 0px rgba(0,0,0,0.2);
+}
+
+/* Sticky Note Base */
+.retro-sticky {
+  aspect-ratio: 1 / 1;
+  box-shadow: 8px 8px 0px var(--retro-dark);
+  border: 2px solid var(--retro-dark);
 }
 
 /* Typing animation */
