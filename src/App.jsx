@@ -213,10 +213,41 @@ function App() {
 
     const status = getStatusIndicator()
     const isRetro = theme === 'retro'
+    const isSynth = theme === 'synthwave'
+
+    const getAppClass = () => {
+        if (isRetro) return "min-h-screen flex flex-col retro-bg p-4 md:p-8"
+        if (isSynth) return "min-h-screen flex flex-col relative overflow-hidden font-mono"
+        return "min-h-screen flex flex-col modern-bg"
+    }
 
     return (
-        <div className={isRetro ? "min-h-screen flex flex-col retro-bg p-4 md:p-8" : "min-h-screen flex flex-col modern-bg"}>
-            <div className={isRetro ? "max-w-7xl mx-auto w-full retro-board flex flex-col flex-1 overflow-hidden" : "flex flex-col flex-1"}>
+        <div className={getAppClass()}>
+            {isSynth && (
+                <>
+                    <div className="crt-overlay" />
+                    <div className="synthwave-scene">
+                        <div className="synth-stars" />
+                        <div className="synth-sun" />
+                        <div className="synth-mountains" />
+                        <div className="synth-palms">
+                            <div className="palm" />
+                            <div className="palm opacity-40 scale-75 translate-y-4" />
+                            <div className="palm opacity-20 scale-50 translate-y-8" />
+                            <div className="palm opacity-20 scale-50 translate-y-8" />
+                            <div className="palm opacity-40 scale-75 translate-y-4" />
+                            <div className="palm" />
+                        </div>
+                        <div className="synth-grid-container">
+                            <div className="synth-grid" />
+                        </div>
+                        {/* Vignette */}
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#000000_100%)] opacity-60 pointer-events-none z-10" />
+                    </div>
+                </>
+            )}
+            
+            <div className={isRetro ? "max-w-7xl mx-auto w-full retro-board flex flex-col flex-1 overflow-hidden" : "flex flex-col flex-1 relative z-20"}>
                 {/* Header */}
                 {isRetro ? (
                     <header className="border-b-4 border-[#2D1B0E] p-4 flex items-center justify-between bg-[#FDF5E6]">
@@ -255,6 +286,64 @@ function App() {
                                         <div className="h-1 bg-[#2D1B0E] my-1" />
                                         <button onClick={() => { store.clearBoard(); setIsMenuOpen(false) }} className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
                                             <Trash2 className="w-5 h-5" /> CLEAR BOARD
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </header>
+                ) : isSynth ? (
+                    <header className="p-4 flex items-center justify-between border-b border-white/20 bg-black/40 backdrop-blur-sm z-50">
+                         <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-gradient-to-tr from-cyan-400 to-purple-600 clip-path-polygon-[20%_0,100%_0,80%_100%,0_100%] flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.5)] transform -skew-x-12">
+                                <Sparkles className="w-6 h-6 text-white transform skew-x-12" />
+                            </div>
+                            <div className="flex flex-col">
+                                <h1 className="text-3xl font-orbitron font-black uppercase italic tracking-widest text-chrome filter drop-shadow-[0_1px_2px_rgba(255,255,255,0.2)]" data-text="RETROBOARD">
+                                    RETROBOARD
+                                </h1>
+                                <div className="flex items-center gap-2">
+                                    <div className="h-[2px] w-8 bg-cyan-400 shadow-[0_0_5px_cyan]" />
+                                    <p className="text-[10px] text-cyan-300 font-mono tracking-[0.2em] shadow-cyan-500/50 bg-black/50 px-1 font-bold">SYSTEM: {store.roomName.toUpperCase()}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-6">
+                            <button
+                                onClick={copyLink}
+                                className="group relative px-6 py-2 bg-[#050510] border border-cyan-500 overflow-hidden shadow-[0_0_10px_rgba(6,182,212,0.3)] hover:shadow-[0_0_20px_rgba(6,182,212,0.6)] transition-all"
+                                aria-label="Copy share link"
+                            >
+                                <div className="absolute inset-0 w-full h-full bg-cyan-900/20 transform skew-x-[-20deg] group-hover:bg-cyan-500/30 transition-all" />
+                                <div className="relative flex items-center gap-2 text-cyan-400 font-orbitron text-xs font-bold tracking-widest group-hover:text-white transition-colors">
+                                    {copied ? <><Check className="w-4 h-4" /><span>LINK_COPIED</span></> : <><Copy className="w-4 h-4" /><span>SHARE_UPLINK</span></>}
+                                </div>
+                            </button>
+                            
+                            <div className="relative" ref={menuRef}>
+                                <button
+                                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                    className="p-3 border border-pink-500 bg-black hover:bg-pink-900/40 text-pink-500 hover:text-white transition-all shadow-[0_0_10px_rgba(236,72,153,0.3)] clip-path-polygon-[10%_0,100%_0,90%_100%,0_100%]"
+                                    aria-label="Open settings menu"
+                                >
+                                    <Settings className="w-5 h-5" />
+                                </button>
+                                {isMenuOpen && (
+                                    <div className="absolute right-0 mt-4 w-64 bg-black/90 border-2 border-pink-500 shadow-[0_0_30px_rgba(236,72,153,0.3)] z-[100] p-1 font-orbitron">
+                                        <div className="absolute -top-2 right-4 w-4 h-4 bg-pink-500 rotate-45 border-l border-t border-white" />
+                                        <button onClick={handleExport} className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-cyan-400 hover:bg-cyan-900/30 hover:text-white transition-colors uppercase tracking-wider border-b border-white/10">
+                                            <Download className="w-4 h-4" /> EXPORT_DATA
+                                        </button>
+                                        {timerEnabled && (
+                                            <button onClick={toggleTimer} className={`w-full flex items-center gap-3 px-4 py-3 text-xs font-bold transition-colors uppercase tracking-wider border-b border-white/10 ${isTimerRunning ? 'text-red-500 hover:bg-red-900/30 hover:text-white' : 'text-green-400 hover:bg-green-900/30 hover:text-white'}`}>
+                                                {isTimerRunning ? <><Square className="w-4 h-4 fill-current" /> ABORT_TIMER</> : <><Play className="w-4 h-4 fill-current" /> INIT_TIMER</>}
+                                            </button>
+                                        )}
+                                        <button onClick={() => { setIsSettingsOpen(true); setIsMenuOpen(false) }} className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-purple-400 hover:bg-purple-900/30 hover:text-white transition-colors uppercase tracking-wider border-b border-white/10">
+                                            <Settings className="w-4 h-4" /> CONFIG
+                                        </button>
+                                        <button onClick={() => { store.clearBoard(); setIsMenuOpen(false) }} className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-900/30 hover:text-white transition-colors uppercase tracking-wider">
+                                            <Trash2 className="w-4 h-4" /> PURGE_SYSTEM
                                         </button>
                                     </div>
                                 )}
@@ -344,6 +433,7 @@ function App() {
                                         <select value={theme} onChange={(e) => setTheme(e.target.value)} className="w-full bg-white border-4 border-[#2D1B0E] px-4 py-3 text-lg font-bold text-[#2D1B0E] focus:bg-[#FDF5E6] transition-all appearance-none">
                                             <option value="modern">Modern Dark</option>
                                             <option value="retro">Groovy Retro</option>
+                                            <option value="synthwave">Synthwave Night</option>
                                         </select>
                                     </div>
                                     <div>
@@ -373,6 +463,56 @@ function App() {
                             </form>
                         </div>
                     </div>
+                ) : isSynth ? (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 font-orbitron">
+                        <div className="w-full max-w-md bg-black border-2 border-cyan-500 shadow-[0_0_50px_rgba(6,182,212,0.4)] overflow-hidden animate-in zoom-in-95 duration-200 relative">
+                            {/* Decorative Corners */}
+                            <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-white pointer-events-none" />
+                            <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-white pointer-events-none" />
+                            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-white pointer-events-none" />
+                            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-white pointer-events-none" />
+
+                            <div className="px-6 py-4 border-b border-cyan-500/50 flex items-center justify-between bg-cyan-950/30">
+                                <h2 className="text-xl font-black text-cyan-400 uppercase tracking-widest text-shadow-cyan">SYSTEM_CONFIG</h2>
+                                <button onClick={() => setIsSettingsOpen(false)} className="text-cyan-500 hover:text-white transition-colors"><X className="w-6 h-6" /></button>
+                            </div>
+                            <form onSubmit={handleSaveSettings}>
+                                <div className="p-6 space-y-6">
+                                    <div>
+                                        <label className="block text-xs font-bold text-pink-500 uppercase tracking-widest mb-2">INTERFACE_THEME</label>
+                                        <select value={theme} onChange={(e) => setTheme(e.target.value)} className="w-full bg-black border border-pink-500 text-pink-400 font-mono text-sm px-4 py-3 focus:outline-none focus:shadow-[0_0_15px_rgba(236,72,153,0.5)] transition-all uppercase">
+                                            <option value="modern">Modern Dark</option>
+                                            <option value="retro">Groovy Retro</option>
+                                            <option value="synthwave">Synthwave Night</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-cyan-500 uppercase tracking-widest mb-2">VOTE_LIMIT_PROTOCOL</label>
+                                        <input type="number" min="1" max="99" value={maxVotes} onChange={(e) => setMaxVotes(e.target.value)} className="w-full bg-black border border-cyan-500 text-cyan-400 font-mono text-sm px-4 py-3 focus:outline-none focus:shadow-[0_0_15px_rgba(6,182,212,0.5)] transition-all" placeholder="Enter value..." />
+                                        <p className="mt-2 text-[10px] text-cyan-600 font-mono uppercase tracking-widest">>> RESTRICTS_INPUT_PER_USER_NODE</p>
+                                    </div>
+                                    <div className="pt-6 border-t border-white/10">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <label className="text-xs font-bold text-purple-500 uppercase tracking-widest">TEMPORAL_LIMITER</label>
+                                            <button type="button" onClick={() => setTimerEnabled(!timerEnabled)} className={`w-12 h-6 border transition-all relative ${timerEnabled ? 'bg-purple-900/50 border-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.5)]' : 'bg-black border-white/20'}`}>
+                                                <div className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white transition-transform ${timerEnabled ? 'translate-x-6 bg-purple-400' : 'translate-x-0'}`} />
+                                            </button>
+                                        </div>
+                                        {timerEnabled && (
+                                            <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                                                <label className="block text-xs font-bold text-purple-500 uppercase tracking-widest mb-2">DURATION_MINUTES</label>
+                                                <input type="number" min="1" max="60" value={timerDuration} onChange={(e) => setTimerDuration(e.target.value)} className="w-full bg-black border border-purple-500 text-purple-400 font-mono text-sm px-4 py-3 focus:outline-none focus:shadow-[0_0_15px_rgba(168,85,247,0.5)] transition-all" />
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="px-6 py-4 bg-cyan-950/20 border-t border-cyan-500/50 flex justify-end gap-4">
+                                    <button type="button" onClick={() => setIsSettingsOpen(false)} className="px-4 py-2 text-xs font-bold text-cyan-600 hover:text-white transition-colors uppercase tracking-widest">ABORT</button>
+                                    <button type="submit" className="px-6 py-2 bg-cyan-600/20 border border-cyan-400 text-cyan-300 font-bold uppercase tracking-widest hover:bg-cyan-400 hover:text-black hover:shadow-[0_0_20px_cyan] transition-all">EXECUTE</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 ) : (
                     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm animate-in fade-in duration-200">
                         <div className="w-full max-w-md bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
@@ -387,6 +527,7 @@ function App() {
                                         <select value={theme} onChange={(e) => setTheme(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all">
                                             <option value="modern">Modern Dark</option>
                                             <option value="retro">Groovy Retro</option>
+                                            <option value="synthwave">Synthwave Night</option>
                                         </select>
                                     </div>
                                     <div>

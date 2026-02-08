@@ -174,6 +174,132 @@ function Card({ card, columnArray, columnKey, theme }) {
     }
 
     const isRetro = theme === 'retro'
+    const isSynth = theme === 'synthwave'
+
+    if (isSynth) {
+        const getCardColorClasses = () => {
+             switch (columnKey) {
+                case 'kudos': return { border: 'border-synth-cyan', text: 'text-synth-cyan', glow: 'shadow-synth-cyan/20' }
+                case 'good': return { border: 'border-synth-cyan', text: 'text-synth-cyan', glow: 'shadow-synth-cyan/20' }
+                case 'improve': return { border: 'border-synth-magenta', text: 'text-synth-magenta', glow: 'shadow-synth-magenta/20' }
+                case 'action': return { border: 'border-synth-green', text: 'text-synth-green', glow: 'shadow-synth-green/20' }
+                default: return { border: 'border-synth-purple', text: 'text-synth-purple', glow: 'shadow-synth-purple/20' }
+            }
+        }
+
+        const themeClasses = getCardColorClasses()
+
+        return (
+            <div 
+                className={`group relative p-4 bg-black border ${themeClasses.border} rounded-[2px] transition-all duration-300 ${
+                    isEditing 
+                        ? 'scale-[1.02] shadow-[0_0_20px_rgba(255,255,255,0.2)] z-50 ring-1 ring-white/50' 
+                        : `hover:-translate-y-1 ${themeClasses.glow} z-0`
+                }`}
+                data-card-id={card.id}
+            >
+                {/* Draft indicator */}
+                {!card.isCommitted && (
+                    <div className="absolute -top-2 -right-2 px-1.5 py-0.5 bg-black border border-white text-[9px] font-mono text-white font-bold uppercase tracking-tighter z-10">
+                        DRAFT
+                    </div>
+                )}
+
+                {/* Typing indicator */}
+                {typingUser && (
+                    <div className={`absolute -top-3 left-2 px-2 py-1 bg-black text-white text-[10px] font-mono flex items-center gap-2 z-10 border ${themeClasses.border} shadow-[0_0_10px_black]`}>
+                        <span className="font-black text-white uppercase tracking-wider">{typingUser.name}</span>
+                        <span className="flex gap-0.5">
+                            <span className="typing-dot w-1 h-1 bg-white rounded-full" />
+                            <span className="typing-dot w-1 h-1 bg-white rounded-full" />
+                        </span>
+                    </div>
+                )}
+
+                {/* Card content */}
+                <div className="flex-1">
+                    {isEditing ? (
+                        <div className="relative">
+                            <span className="absolute left-0 top-0 text-white/50 font-mono text-xs font-bold">{'>'}</span>
+                            <textarea
+                                ref={textareaRef}
+                                value={displayText}
+                                onChange={handleTextChange}
+                                onBlur={handleBlur}
+                                onKeyDown={handleKeyDown}
+                                onKeyUp={updateCursor}
+                                onClick={updateCursor}
+                                onPaste={handlePaste}
+                                placeholder="> INGESTING_DATA..."
+                                className="w-full bg-transparent text-white placeholder-white/50 resize-none focus:outline-none min-h-[60px] font-mono text-sm font-medium pl-4 leading-relaxed caret-white"
+                                rows={3}
+                            />
+                        </div>
+                    ) : (
+                        <p
+                            onClick={() => setIsEditing(true)}
+                            className="text-white cursor-text min-h-[60px] whitespace-pre-wrap font-mono text-sm font-medium leading-relaxed"
+                        >
+                            {displayText || <span className="text-white/40 italic font-sans font-bold">{'>'} [NODE_EMPTY]</span>}
+                        </p>
+                    )}
+                </div>
+
+                {/* Image display */}
+                {card.image && (
+                    <div className={`mt-3 relative group/image border border-white/20 overflow-hidden bg-black/50`}>
+                        <img
+                            src={card.image}
+                            alt="Data attachment"
+                            className="w-full opacity-90 group-hover:opacity-100 transition-opacity"
+                            loading="lazy"
+                        />
+                        {isEditing && (
+                            <button
+                                onClick={handleRemoveImage}
+                                className="absolute top-1 right-1 p-1 bg-black text-white border border-white hover:bg-red-600 transition-colors"
+                                title="Purge image"
+                            >
+                                <Trash2 className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/20">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                        {VOTE_TYPES.map(emoji => {
+                            const reactionCount = (card.reactions?.[emoji]?.length || 0) + 
+                                (emoji === '👍' && card.votedBy?.length ? card.votedBy.length : 0)
+                            
+                            const hasReacted = card.reactions?.[emoji]?.includes(store.userId) || 
+                                (emoji === '👍' && card.votedBy?.includes(store.userId))
+
+                            return (
+                                <button
+                                    key={emoji}
+                                    onClick={() => handleVote(emoji)}
+                                    className={`flex items-center gap-1 px-1.5 py-0.5 transition-all text-[11px] font-mono border active:scale-150 duration-200 font-bold ${
+                                        hasReacted
+                                            ? `${themeClasses.border} bg-black text-white shadow-[0_0_5px_currentColor]`
+                                            : 'border-white/20 bg-transparent text-white/60 hover:text-white hover:border-white/50'
+                                    }`}
+                                    aria-label={`Vote ${emoji}`}
+                                >
+                                    <span>{emoji}</span>
+                                    {reactionCount > 0 && <span>{reactionCount}</span>}
+                                </button>
+                            )
+                        })}
+                    </div>
+                    <div className={`text-[9px] font-mono text-white/40 uppercase tracking-[0.2em] font-bold`}>
+                        Active
+                    </div>
+                </div>
+            </div>
+        )
+    }
 
     if (isRetro) {
         const getRotation = () => {

@@ -23,6 +23,68 @@ function Column({ title, columnKey, cards, colors, theme }) {
     }
 
     const isRetro = theme === 'retro'
+    const isSynth = theme === 'synthwave'
+
+    if (isSynth) {
+        const getColumnColorClasses = () => {
+            switch (columnKey) {
+                case 'kudos': return { border: 'border-synth-cyan', text: 'text-synth-cyan', shadow: 'shadow-synth-cyan/20' }
+                case 'good': return { border: 'border-synth-cyan', text: 'text-synth-cyan', shadow: 'shadow-synth-cyan/20' }
+                case 'improve': return { border: 'border-synth-magenta', text: 'text-synth-magenta', shadow: 'shadow-synth-magenta/20' }
+                case 'action': return { border: 'border-synth-green', text: 'text-synth-green', shadow: 'shadow-synth-green/20' }
+                default: return { border: 'border-synth-purple', text: 'text-synth-purple', shadow: 'shadow-synth-purple/20' }
+            }
+        }
+
+        const themeClasses = getColumnColorClasses()
+
+        return (
+            <div className={`p-4 bg-black/80 backdrop-blur-2xl border border-white/10 border-b-[3px] ${themeClasses.border} flex flex-col h-full relative shadow-2xl`}>
+                {/* Column header */}
+                <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/20">
+                    <h2 className={`text-lg font-orbitron font-black uppercase tracking-wider text-white filter drop-shadow-[0_0_2px_rgba(255,255,255,0.5)]`}>
+                        {title}
+                    </h2>
+                    <span className={`text-[10px] font-mono px-2 py-0.5 bg-black border ${themeClasses.border} text-white font-bold`}>
+                        {cardList.length} NODES
+                    </span>
+                </div>
+
+                {/* Cards list */}
+                <div className="space-y-4 flex-1">
+                    {cardList
+                        .filter((card, index, self) => 
+                            index === self.findIndex((t) => t.id === card.id)
+                        )
+                        .map((card) => (
+                            <Card
+                                key={card.id}
+                                card={card}
+                                columnArray={cards}
+                                columnKey={columnKey}
+                                theme={theme}
+                            />
+                        ))}
+
+                    {cardList.length === 0 && (
+                        <div className="text-center py-12 border border-dashed border-white/10 bg-white/5">
+                            <p className="text-[10px] font-mono text-white/50 uppercase tracking-[0.2em] font-bold">System idle... No data</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Add card button */}
+                <button
+                    onClick={handleAddCard}
+                    className={`group mt-6 flex items-center justify-center gap-2 py-3 border border-white/20 bg-[#1a1a2e] hover:bg-[#2a2a4e] hover:border-white transition-all duration-300 shadow-lg`}
+                    aria-label={`Add new card to ${title}`}
+                >
+                    <Plus className={`w-5 h-5 text-white group-hover:scale-110 transition-transform`} />
+                    <span className={`text-xs font-orbitron font-bold text-white tracking-widest`}>INSERT DATA PACKET</span>
+                </button>
+            </div>
+        )
+    }
 
     if (isRetro) {
         return (
