@@ -70,18 +70,12 @@ export function createRetroStore({
     function createWebrtcProvider() {
         const providerOpts = {
             signaling: SIGNALING_SERVERS.filter(s => !!s),
-            filterBcConns: false, // Ensure BC works even in Node
+            peerOpts: {}
         }
         
         // Inject platform-specific WebRTC implementation if provided
         if (platform.RTCPeerConnection) {
-            providerOpts.peerOpts = {
-                wrtc: {
-                    RTCPeerConnection: platform.RTCPeerConnection,
-                    RTCSessionDescription: platform.RTCSessionDescription,
-                    RTCIceCandidate: platform.RTCIceCandidate
-                }
-            }
+            providerOpts.peerOpts.wrtc = platform
         }
 
         const provider = new ProviderClass(roomName, doc, providerOpts)
@@ -97,7 +91,7 @@ export function createRetroStore({
         })
 
         provider.on('peers', ({ webrtcPeers, bcPeers }) => {
-            // Peer count tracking handled via connectionStatus if needed
+            // console.log('Peers update:', webrtcPeers.size)
         })
 
         provider.on('synced', ({ synced }) => {

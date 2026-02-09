@@ -10,6 +10,7 @@ import TuiCard from './components/TuiCard.jsx';
 const TuiApp = ({ roomName }) => {
   const { exit } = useApp();
   const [status, setStatus] = useState({ signaling: 'connecting' });
+  const [peerCount, setPeerCount] = useState(0);
   const [cards, setCards] = useState([]);
   const [selectedColumnIndex, setSelectedColumnIndex] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -45,6 +46,13 @@ const TuiApp = ({ roomName }) => {
     const unsubscribe = newStore.connectionStatus.subscribe((s) => {
       setStatus(s);
     });
+
+    const updatePeerCount = () => {
+        setPeerCount(newStore.awareness.getStates().size);
+    };
+
+    newStore.awareness.on('change', updatePeerCount);
+    updatePeerCount();
 
     const updateCards = () => {
         const getCards = (arr, type, ref) => arr.toArray().map(c => ({ ...c, type, ref }));
@@ -131,6 +139,8 @@ const TuiApp = ({ roomName }) => {
             <Text color={status.signaling === 'connected' ? 'green' : 'yellow'}>
                 {status.signaling.toUpperCase()}
             </Text>
+            <Text color="white"> | Peers: </Text>
+            <Text color="cyan">{peerCount}</Text>
             {status.synced && <Text color="cyan"> [SYNCED]</Text>}
         </Box>
       </Box>
