@@ -13,8 +13,31 @@ A **local-first, real-time collaborative retrospective board** that works entire
 - **Google Docs-Style Editing** - Multiple users can edit the same card simultaneously with character-by-character real-time syncing
 - **Real-time P2P Sync** - Changes sync instantly between browsers via WebRTC
 - **Offline Persistence** - Cards saved to IndexedDB, survive page refresh
+- **Interactive TUI** - Connect to your board from the terminal with a retro-styled interface
 - **Image Support** - Paste images directly into cards
-- **No Backend** - Everything runs in the browser
+- **No Backend** - Everything runs in the browser or terminal
+
+## Terminal Interface (TUI)
+
+RetroBoard now includes a full terminal interface that syncs in real-time with browser users.
+
+### Quick Install (macOS/Linux)
+```bash
+curl -fsSL https://mikelockz.github.io/retro/install.sh | bash
+```
+
+### Usage
+```bash
+# Join a room
+retro-tui my-retro-room
+```
+
+### TUI Keyboard Shortcuts
+- `↑ / ↓` - Navigate through cards
+- `a` - Add a new card (Input mode)
+- `v` - Vote on the selected card
+- `r` - Force reconnect
+- `Esc` - Exit
 
 ## How It Works
 
@@ -79,11 +102,17 @@ RetroBoard uses [Yjs CRDTs](https://yjs.dev/) with `Y.Text` for Google Docs-styl
 # Install dependencies
 npm install
 
-# Start dev server
+# Start browser dev server
 npm run dev
 
-# Build for production
+# Start TUI locally
+npm run tui my-room-name
+
+# Build browser for production
 npm run build
+
+# Build TUI binary
+npm run build:tui-binary
 ```
 
 ## Self-Hosting Signaling Server
