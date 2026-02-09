@@ -8,71 +8,304 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Retro Theme Colors */
+  --retro-blue: #4056F4;
+  --retro-orange: #FF8C00;
+  --retro-pink: #EC4899;
+  --retro-cream: #FDF5E6;
+  --retro-dark: #2D1B0E;
+  --sunburst-1: #4056F4;
+  --sunburst-2: #FF8C00;
+  --sunburst-3: #EC4899;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
-  background-attachment: fixed;
 }
 
-/* Custom scrollbar */
+.modern-bg {
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+  color: white;
+}
+
+.retro-bg {
+  background: conic-gradient(
+    var(--sunburst-1) 0deg 30deg, 
+    var(--sunburst-2) 30deg 60deg, 
+    var(--sunburst-3) 60deg 90deg, 
+    var(--sunburst-1) 90deg 120deg, 
+    var(--sunburst-2) 120deg 150deg, 
+    var(--sunburst-3) 150deg 180deg,
+    var(--sunburst-1) 180deg 210deg,
+    var(--sunburst-2) 210deg 240deg,
+    var(--sunburst-3) 240deg 270deg,
+    var(--sunburst-1) 270deg 300deg,
+    var(--sunburst-2) 300deg 330deg,
+    var(--sunburst-3) 330deg 360deg
+  );
+}
+
+/* --- SYNTHWAVE WORLD --- */
+
+.synthwave-scene {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(to bottom, #020024 0%, #090979 35%, #2a004e 100%);
+  overflow: hidden;
+  z-index: 0;
+}
+
+/* The Sun */
+.synth-sun {
+  position: absolute;
+  bottom: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 300px;
+  height: 300px;
+  background: linear-gradient(to bottom, #ffff00 0%, #ff00aa 100%);
+  border-radius: 50%;
+  box-shadow: 0 0 50px #ff00aa, 0 0 100px #ff00aa;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 40%,
+    transparent 40%,
+    transparent 42%,
+    black 42%,
+    black 50%,
+    transparent 50%,
+    transparent 53%,
+    black 53%,
+    black 60%,
+    transparent 60%,
+    transparent 64%,
+    black 64%,
+    black 70%,
+    transparent 70%,
+    transparent 75%,
+    black 75%,
+    black 80%,
+    transparent 80%,
+    transparent 86%,
+    black 86%,
+    black 90%,
+    transparent 90%,
+    transparent 97%,
+    black 97%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 40%,
+    transparent 40%,
+    transparent 42%,
+    black 42%,
+    black 50%,
+    transparent 50%,
+    transparent 53%,
+    black 53%,
+    black 60%,
+    transparent 60%,
+    transparent 64%,
+    black 64%,
+    black 70%,
+    transparent 70%,
+    transparent 75%,
+    black 75%,
+    black 80%,
+    transparent 80%,
+    transparent 86%,
+    black 86%,
+    black 90%,
+    transparent 90%,
+    transparent 97%,
+    black 97%
+  );
+}
+
+/* The Grid (Floor) */
+.synth-grid-container {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 35%; /* Height of the floor */
+  perspective: 450px; /* Strong perspective */
+  overflow: hidden;
+  background: #180c2e; /* Dark purple base */
+}
+
+.synth-grid {
+  position: absolute;
+  top: -200%; /* Start much higher to provide runway */
+  left: -50%;
+  width: 200%;
+  height: 400%; /* Very tall to cover the perspective view */
+  background-image: 
+    linear-gradient(rgba(255, 0, 255, 0.6) 2px, transparent 2px),
+    linear-gradient(90deg, rgba(255, 0, 255, 0.6) 2px, transparent 2px);
+  background-size: 60px 60px;
+  transform-origin: 50% 50%;
+  animation: grid-move 10s linear infinite; /* Very slow for a majestic crawl */
+  box-shadow: 0 0 100px rgba(255, 0, 255, 0.4) inset;
+}
+
+@keyframes grid-move {
+  0% { 
+    transform: perspective(450px) rotateX(60deg) translateY(0); 
+  }
+  100% { 
+    transform: perspective(450px) rotateX(60deg) translateY(60px); 
+  }
+}
+
+/* Mountains */
+.synth-mountains {
+  position: absolute;
+  bottom: 35%; /* Sit right on the horizon line */
+  left: 0;
+  width: 100%;
+  height: 150px;
+  background: black;
+  clip-path: polygon(
+    0% 100%, 
+    0% 80%, 5% 90%, 10% 60%, 15% 85%, 20% 70%, 25% 95%, 
+    30% 60%, 35% 80%, 40% 65%, 45% 90%, 50% 50%, 
+    55% 90%, 60% 65%, 65% 85%, 70% 60%, 75% 90%, 
+    80% 70%, 85% 95%, 90% 60%, 95% 85%, 100% 80%, 
+    100% 100%
+  );
+  z-index: 1; /* In front of sun, behind UI */
+  background: linear-gradient(to top, #2a004e, #000);
+}
+
+/* Chrome Text Effect */
+.text-chrome {
+  background: linear-gradient(to bottom, #ffffff 0%, #d4d4d4 49%, #888888 50%, #ffffff 55%, #a1a1a1 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 2px 0 rgba(0,0,0,0.5);
+  position: relative;
+}
+
+.text-chrome::after {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: -1;
+  text-shadow: 
+    0 0 2px rgba(255,255,255,0.2);
+}
+
+/* Stars */
+.synth-stars {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60%;
+  background-image: 
+    radial-gradient(white 1px, transparent 1px),
+    radial-gradient(white 1px, transparent 1px);
+  background-size: 50px 50px, 100px 100px;
+  background-position: 0 0, 25px 25px;
+  opacity: 0.5;
+}
+
+/* Palm Trees */
+.synth-palms {
+  position: absolute;
+  bottom: 35%;
+  left: 0;
+  width: 100%;
+  height: 120px;
+  display: flex;
+  justify-content: space-around;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.6;
+}
+
+.palm {
+  width: 80px;
+  height: 100%;
+  background: black;
+  clip-path: polygon(
+    45% 100%, 55% 100%, 55% 40%, 90% 30%, 100% 35%, 85% 25%, 100% 15%, 80% 20%, 90% 5%, 70% 15%, 75% 0%, 50% 20%, 
+    25% 0%, 30% 15%, 10% 5%, 20% 20%, 0% 15%, 15% 25%, 0% 35%, 10% 30%, 45% 40%
+  );
+  filter: drop-shadow(0 0 5px #ff00aa);
+}
+
+/* CRT Scanlines */
+.crt-overlay {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.1) 50%
+  ), linear-gradient(
+    90deg, 
+    rgba(255, 0, 0, 0.03), 
+    rgba(0, 255, 0, 0.01), 
+    rgba(0, 0, 255, 0.03)
+  );
+  background-size: 100% 4px, 3px 100%;
+  pointer-events: none;
+  z-index: 100;
+}
+
+/* Custom Scrollbars */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-::-webkit-scrollbar-track {
+.modern-bg ::-webkit-scrollbar-track, .synthwave-bg ::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.05);
   border-radius: 4px;
 }
 
-::-webkit-scrollbar-thumb {
+.modern-bg ::-webkit-scrollbar-thumb, .synthwave-bg ::-webkit-scrollbar-thumb {
   background: rgba(255, 255, 255, 0.2);
   border-radius: 4px;
 }
 
-::-webkit-scrollbar-thumb:hover {
+.modern-bg ::-webkit-scrollbar-thumb:hover, .synthwave-bg ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
 }
 
-/* Glass morphism card effect */
-.glass {
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+.synthwave-bg ::-webkit-scrollbar-thumb {
+  background: #ff0055;
+  box-shadow: 0 0 5px #ff0055;
 }
 
 /* Typing animation */
 @keyframes typing-dots {
-
-  0%,
-  20% {
-    opacity: 0.2;
-  }
-
-  50% {
-    opacity: 1;
-  }
-
-  80%,
-  100% {
-    opacity: 0.2;
-  }
+  0%, 20% { opacity: 0.2; }
+  50% { opacity: 1; }
+  80%, 100% { opacity: 0.2; }
 }
 
 .typing-dot {
   animation: typing-dots 1.4s infinite;
 }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
 
-.typing-dot:nth-child(2) {
-  animation-delay: 0.2s;
+/* Glitch Animation */
+@keyframes glitch {
+  2%, 64% { transform: translate(2px,0) skew(0deg); }
+  4%, 60% { transform: translate(-2px,0) skew(0deg); }
+  62% { transform: translate(0,0) skew(5deg); }
 }
 
-.typing-dot:nth-child(3) {
-  animation-delay: 0.4s;
+.animate-glitch {
+  animation: glitch 1s linear infinite;
 }
 
 /* Smooth transitions */
@@ -83,8 +316,6 @@ body {
 }
 
 /* Focus styles */
-textarea:focus,
-input:focus {
+textarea:focus, input:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.5);
 }

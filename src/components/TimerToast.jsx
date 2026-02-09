@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Clock, X } from 'lucide-react'
 import store from '../Store'
 
-export default function TimerToast() {
+export default function TimerToast({ theme }) {
     const [timerState, setTimerState] = useState({ startedAt: null, duration: null })
     const [timeLeft, setTimeLeft] = useState(null)
 
@@ -56,6 +56,72 @@ export default function TimerToast() {
     const minutes = Math.floor(timeLeft / 60000)
     const seconds = Math.floor((timeLeft % 60000) / 1000)
     const isOver = timeLeft === 0
+    const isRetro = theme === 'retro'
+    const isSynth = theme === 'synthwave'
+
+    if (isSynth) {
+        return (
+            <div className={`fixed bottom-8 right-8 z-[100] flex items-center gap-6 px-8 py-5 bg-black border-2 transition-all duration-300 animate-in zoom-in fade-in shadow-[0_0_30px_rgba(0,0,0,0.8)] ${
+                isOver 
+                    ? 'border-synth-magenta shadow-[0_0_20px_rgba(255,0,85,0.4)]' 
+                    : 'border-synth-amber shadow-[0_0_20px_rgba(255,183,0,0.2)]'
+            }`}>
+                <div className="flex flex-col items-center">
+                    <span className={`text-[10px] font-mono uppercase tracking-[0.3em] mb-2 font-black ${isOver ? 'text-synth-magenta animate-glitch' : 'text-synth-amber'}`}>
+                        {isOver ? 'SYSTEM_HALT' : 'SESSION_RUNTIME'}
+                    </span>
+                    <div className="flex items-center gap-4">
+                        <div className={`w-2.5 h-2.5 rounded-full shadow-[0_0_10px_currentColor] ${isOver ? 'bg-synth-magenta animate-ping' : 'bg-synth-amber animate-pulse'}`} />
+                        <span className={`font-mono text-5xl font-black tabular-nums tracking-tighter text-white filter drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] ${isOver ? 'text-synth-magenta' : ''}`}>
+                            {minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}
+                        </span>
+                    </div>
+                </div>
+                
+                {isOver && (
+                    <button 
+                        onClick={() => store.dismissTimer()}
+                        className="p-1.5 border-2 border-synth-magenta text-synth-magenta hover:bg-synth-magenta hover:text-white transition-all font-mono text-[10px] shadow-[0_0_10px_rgba(255,0,85,0.2)]"
+                        title="Dismiss for everyone"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+                )}
+            </div>
+        )
+    }
+
+    if (isRetro) {
+        return (
+            <div className={`fixed bottom-10 right-10 z-50 flex items-center gap-4 px-8 py-6 border-4 border-[#2D1B0E] shadow-[12px_12px_0px_rgba(0,0,0,0.2)] animate-in slide-in-from-right-10 fade-in duration-300 ${
+                isOver 
+                    ? 'bg-red-600 text-white' 
+                    : 'bg-[#FF8C00] text-[#2D1B0E]'
+            }`}>
+                <div className="flex flex-col items-center">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] mb-1">
+                        {isOver ? 'TIME WARP!' : 'GROOVY TIME'}
+                    </span>
+                    <div className="flex items-center gap-3">
+                        <Clock className={`w-8 h-8 ${!isOver && timeLeft < 60000 ? 'animate-bounce' : ''}`} />
+                        <span className="font-black text-4xl tabular-nums">
+                            {minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}
+                        </span>
+                    </div>
+                </div>
+                
+                {isOver && (
+                    <button 
+                        onClick={() => store.dismissTimer()}
+                        className="p-2 border-2 border-white hover:bg-white hover:text-red-600 transition-colors font-black text-xs"
+                        title="Dismiss for everyone"
+                    >
+                        <X className="w-6 h-6" />
+                    </button>
+                )}
+            </div>
+        )
+    }
 
     return (
         <div className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl border backdrop-blur-xl animate-in slide-in-from-bottom-10 fade-in duration-300 ${

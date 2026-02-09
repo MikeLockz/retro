@@ -1,0 +1,58 @@
+#!/bin/bash
+set -e
+
+# Detect platform
+OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+ARCH=$(uname -m)
+
+case "$OS-$ARCH" in
+  darwin-arm64)
+    PLATFORM="macos-arm64"
+    ;;
+  darwin-x86_64)
+    PLATFORM="macos-x64"
+    ;;
+  linux-x86_64)
+    PLATFORM="linux-x64"
+    ;;
+  mingw*|msys*|cygwin*)
+    PLATFORM="win-x64"
+    ;;
+  *)
+    echo "Unsupported platform: $OS-$ARCH"
+    exit 1
+    ;;
+esac
+
+# Get latest release version
+LATEST=$(curl -sL https://api.github.com/repos/MikeLockz/retro/releases/latest | grep '"tag_name"' | cut -d'"' -f4 || echo "latest")
+
+if [ -z "$LATEST" ]; then
+    echo "Error: Could not determine the latest release version."
+    exit 1
+fi
+
+echo "Installing RetroBoard TUI ${LATEST} for ${PLATFORM}..."
+
+# Download binary
+BINARY_URL="https://github.com/MikeLockz/retro/releases/download/${LATEST}/retro-tui-${PLATFORM}"
+
+if [[ "$PLATFORM" == "win-x64" ]]; then
+    curl -L "${BINARY_URL}.exe" -o retro-tui.exe
+    echo "✓ Downloaded retro-tui.exe to current directory"
+else
+    # Try /usr/local/bin, fallback to current dir
+    if [ -w /usr/local/bin ]; then
+        curl -L "$BINARY_URL" -o /usr/local/bin/retro-tui
+        chmod +x /usr/local/bin/retro-tui
+        echo "✓ Installed to /usr/local/bin/retro-tui"
+    else
+        curl -L "$BINARY_URL" -o ./retro-tui
+        chmod +x ./retro-tui
+        echo "✓ Downloaded to ./retro-tui (no write permission for /usr/local/bin)"
+    fi
+fi
+
+echo ""
+echo "Usage:"
+echo "  retro-tui my-room-name"
