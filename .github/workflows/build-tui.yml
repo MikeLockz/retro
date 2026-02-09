@@ -39,7 +39,7 @@ jobs:
       - name: Build binary
         run: |
           npm run build:tui
-          npx pkg . --target ${{ matrix.node_target }} --output dist/binaries/retro-tui-${{ matrix.target }} --compress GZip --config package.json
+          npx pkg . --target ${{ matrix.node_target }} --output dist/binaries/retro-tui-${{ matrix.target }} --compress GZip
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4

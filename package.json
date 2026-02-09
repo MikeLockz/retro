@@ -19,7 +19,7 @@
     "preview": "vite preview",
     "tui": "tsx tui/index.jsx",
     "build:tui": "esbuild tui/index.jsx --bundle --platform=node --target=node18 --format=esm --outfile=tui-bundle.js --external:@roamhq/wrtc --external:react-devtools-core",
-    "build:tui-binary": "npm run build:tui && pkg . --config package.json --compress GZip"
+    "build:tui-binary": "npm run build:tui && pkg . --compress GZip"
   },
   "dependencies": {
     "@roamhq/wrtc": "^0.9.1",
