@@ -15,8 +15,9 @@ const TuiApp = ({ roomName }) => {
   const [selectedColumnIndex, setSelectedColumnIndex] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [store, setStore] = useState(null);
-  const [mode, setMode] = useState('view'); // 'view' or 'input'
+  const [mode, setMode] = useState('view'); // 'view', 'input', 'edit'
   const [inputValue, setInputValue] = useState('');
+  const [editingCardId, setEditingCardId] = useState(null);
 
   const columns = [
     { key: 'kudos', label: 'Kudos 💖', color: 'magenta' },
@@ -109,16 +110,33 @@ const TuiApp = ({ roomName }) => {
         setMode('input');
         setInputValue('');
       }
+      if (input === 'e' && columnCards[selectedIndex]) {
+        const card = columnCards[selectedIndex];
+        setMode('edit');
+        setEditingCardId(card.id);
+        setInputValue(card.text || '');
+      }
+      if (input === 'd' && columnCards[selectedIndex]) {
+        const card = columnCards[selectedIndex];
+        store.deleteCard(card.ref, card.id);
+      }
       if (input === 'r') {
           store.reconnect();
       }
-    } else if (mode === 'input') {
+    } else if (mode === 'input' || mode === 'edit') {
       if (key.return) {
         if (inputValue.trim()) {
-          const ref = store[`${currentColumn.key}Cards`];
-          store.createCard(ref, inputValue);
+          if (mode === 'input') {
+            const ref = store[`${currentColumn.key}Cards`];
+            store.createCard(ref, inputValue);
+          } else {
+            const ref = store[`${currentColumn.key}Cards`];
+            store.updateCard(ref, editingCardId, { text: inputValue });
+            store.commitCard(ref, editingCardId);
+          }
         }
         setMode('view');
+        setEditingCardId(null);
       } else if (key.backspace) {
         setInputValue(prev => prev.slice(0, -1));
       } else if (!key.ctrl && !key.meta && !key.alt) {
@@ -155,15 +173,15 @@ const TuiApp = ({ roomName }) => {
         ))}
       </Box>
 
-      {mode === 'input' ? (
+      {mode === 'input' || mode === 'edit' ? (
         <Box borderStyle="bold" borderColor="magenta" paddingX={1} marginBottom={1}>
-          <Text color="white">ADD TO {currentColumn.label.toUpperCase()} (ENTER TO SUBMIT): </Text>
+          <Text color="white">{mode === 'input' ? 'ADD TO' : 'EDIT IN'} {currentColumn.label.toUpperCase()} (ENTER TO SUBMIT): </Text>
           <Text color="cyan">{inputValue}</Text>
           <Text color="cyan" underline> </Text>
         </Box>
       ) : (
         <Box marginBottom={1}>
-          <Text color="gray">Keys: [a] Add Card | [v] Vote | [r] Reconnect | [←/→] Switch Column | [↑/↓] Navigate | [Esc] Exit</Text>
+          <Text color="gray">Keys: [a] Add | [e] Edit | [d] Delete | [v] Vote | [r] Reconnect | [←/→] Column | [↑/↓] Navigate | [Esc] Exit</Text>
         </Box>
       )}
 
