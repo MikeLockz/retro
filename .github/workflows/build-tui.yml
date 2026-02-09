@@ -1,0 +1,62 @@
+name: Build TUI Binaries
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-latest
+            target: macos-arm64
+            node_target: node18-macos-arm64
+          - os: macos-13
+            target: macos-x64
+            node_target: node18-macos-x64
+          - os: ubuntu-latest
+            target: linux-x64
+            node_target: node18-linux-x64
+          - os: windows-latest
+            target: win-x64
+            node_target: node18-win-x64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build binary
+        run: |
+          npm run build:tui
+          npx pkg tui-bundle.mjs --target ${{ matrix.node_target }} --output dist/binaries/retro-tui-${{ matrix.target }} --compress GZip --config package.json
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: retro-tui-${{ matrix.target }}
+          path: dist/binaries/retro-tui-*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - uses: actions/download-artifact@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            retro-tui-*/retro-tui-*
