@@ -25,11 +25,11 @@ case "$OS-$ARCH" in
 esac
 
 # Get latest release version
-LATEST=$(curl -sL https://api.github.com/repos/MikeLockz/retro/releases/latest | grep '"tag_name"' | cut -d'"' -f4 || echo "latest")
+LATEST=$(curl -sL https://api.github.com/repos/MikeLockz/retro/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
 
 if [ -z "$LATEST" ]; then
-    echo "Error: Could not determine the latest release version."
-    exit 1
+    echo "Warning: Could not determine the latest release tag via API. Falling back to 'latest'..."
+    LATEST="latest"
 fi
 
 echo "Installing RetroBoard TUI ${LATEST} for ${PLATFORM}..."
