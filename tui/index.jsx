@@ -11,6 +11,7 @@ const TuiApp = ({ roomName }) => {
   const { exit } = useApp();
   const [status, setStatus] = useState({ signaling: 'connecting' });
   const [peerCount, setPeerCount] = useState(0);
+  const [presence, setPresence] = useState([]);
   const [timerState, setTimerState] = useState({ active: false, remaining: 0 });
   const [cards, setCards] = useState([]);
   const [selectedColumnIndex, setSelectedColumnIndex] = useState(0);
@@ -50,7 +51,13 @@ const TuiApp = ({ roomName }) => {
     });
 
     const updatePeerCount = () => {
-        setPeerCount(newStore.awareness.getStates().size);
+        const states = newStore.awareness.getStates();
+        setPeerCount(states.size);
+        
+        const users = Array.from(states.values())
+            .filter(s => s.user)
+            .map(s => s.user);
+        setPresence(users);
     };
 
     newStore.awareness.on('change', updatePeerCount);
@@ -149,6 +156,10 @@ const TuiApp = ({ roomName }) => {
       if (input === 'c') {
           store.clearBoard();
       }
+      if (input === '1') setSelectedColumnIndex(0);
+      if (input === '2') setSelectedColumnIndex(1);
+      if (input === '3') setSelectedColumnIndex(2);
+      if (input === '4') setSelectedColumnIndex(3);
     } else if (mode === 'input' || mode === 'edit') {
       if (key.return) {
         if (inputValue.trim()) {
@@ -174,12 +185,22 @@ const TuiApp = ({ roomName }) => {
   return (
     <Box flexDirection="column" padding={1}>
       <Box borderStyle="double" borderColor="cyan" paddingX={2} marginBottom={1} justifyContent="space-between">
-        <Box>
-            <Text color="magenta" bold italic> RETRO_SYSTEM </Text>
-            <Text color="white"> | Room: </Text>
-            <Text color="cyan" bold>{roomName.toUpperCase()}</Text>
+        <Box flexDirection="column">
+            <Box>
+                <Text color="magenta" bold italic> RETRO_SYSTEM </Text>
+                <Text color="white"> | Room: </Text>
+                <Text color="cyan" bold>{roomName.toUpperCase()}</Text>
+            </Box>
+            <Box marginTop={1}>
+                <Text color="gray">USERS: </Text>
+                {presence.map((u, i) => (
+                    <Text key={u.id} color={u.colorClasses?.hex || 'white'}>
+                        {u.name}{i < presence.length - 1 ? ', ' : ''}
+                    </Text>
+                ))}
+            </Box>
         </Box>
-        <Box>
+        <Box flexDirection="column" alignItems="flex-end">
             {timerState.active && (
                 <Box marginRight={2}>
                     <Text color="yellow" bold> ⏱ {Math.floor(timerState.remaining / 60000)}:{(Math.floor(timerState.remaining / 1000) % 60).toString().padStart(2, '0')} </Text>
@@ -198,7 +219,7 @@ const TuiApp = ({ roomName }) => {
         {columns.map((col, i) => (
             <Box key={col.key} marginRight={2} borderStyle={i === selectedColumnIndex ? 'bold' : 'single'} borderColor={i === selectedColumnIndex ? col.color : 'gray'} paddingX={1}>
                 <Text color={i === selectedColumnIndex ? col.color : 'white'} bold={i === selectedColumnIndex}>
-                    {col.label} ({cards[col.key]?.length || 0})
+                    [{i + 1}] {col.label} ({cards[col.key]?.length || 0})
                 </Text>
             </Box>
         ))}
@@ -213,7 +234,7 @@ const TuiApp = ({ roomName }) => {
       ) : (
         <Box marginBottom={1} flexDirection="column">
           <Text color="gray">Keys: [a] Add | [e] Edit | [d] Delete | [v] Vote | [r] Reconnect | [c] Clear Board</Text>
-          <Text color="gray">      [t] Start Timer | [x] Stop Timer | [←/→] Column | [↑/↓] Navigate | [Esc] Exit</Text>
+          <Text color="gray">      [t] Start Timer | [x] Stop Timer | [1-4] Switch Column | [↑/↓] Navigate | [Esc] Exit</Text>
         </Box>
       )}
 
