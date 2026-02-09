@@ -283,6 +283,14 @@ function App() {
                                         <button onClick={() => { setIsSettingsOpen(true); setIsMenuOpen(false) }} className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[#2D1B0E] hover:bg-[#FDF5E6] transition-colors">
                                             <Settings className="w-5 h-5" /> SETTINGS
                                         </button>
+                                        <button onClick={() => {
+                                            navigator.clipboard.writeText(`retro-tui ${store.roomName}`)
+                                            setIsMenuOpen(false)
+                                            setCopied(true)
+                                            setTimeout(() => setCopied(false), 2000)
+                                        }} className="w-full flex items-center gap-2 px-4 py-3 text-sm text-[#2D1B0E] hover:bg-[#FDF5E6] transition-colors">
+                                            <div className="w-5 h-5 flex items-center justify-center font-mono font-bold text-xs bg-[#2D1B0E] text-white rounded-sm">&gt;_</div> COPY TUI CMD
+                                        </button>
                                         <div className="h-1 bg-[#2D1B0E] my-1" />
                                         <button onClick={() => { store.clearBoard(); setIsMenuOpen(false) }} className="w-full flex items-center gap-2 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors">
                                             <Trash2 className="w-5 h-5" /> CLEAR BOARD
@@ -342,6 +350,14 @@ function App() {
                                         <button onClick={() => { setIsSettingsOpen(true); setIsMenuOpen(false) }} className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-purple-400 hover:bg-purple-900/30 hover:text-white transition-colors uppercase tracking-wider border-b border-white/10">
                                             <Settings className="w-4 h-4" /> CONFIG
                                         </button>
+                                        <button onClick={() => {
+                                            navigator.clipboard.writeText(`retro-tui ${store.roomName}`)
+                                            setIsMenuOpen(false)
+                                            setCopied(true)
+                                            setTimeout(() => setCopied(false), 2000)
+                                        }} className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-green-400 hover:bg-green-900/30 hover:text-white transition-colors uppercase tracking-wider border-b border-white/10">
+                                            <div className="w-4 h-4 flex items-center justify-center font-mono text-[10px] border border-current">&gt;_</div> COPY_TUI_CMD
+                                        </button>
                                         <button onClick={() => { store.clearBoard(); setIsMenuOpen(false) }} className="w-full flex items-center gap-3 px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-900/30 hover:text-white transition-colors uppercase tracking-wider">
                                             <Trash2 className="w-4 h-4" /> PURGE_SYSTEM
                                         </button>
@@ -382,6 +398,14 @@ function App() {
                                             )}
                                             <button onClick={() => { setIsSettingsOpen(true); setIsMenuOpen(false) }} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-white/70 hover:bg-white/5 transition-colors">
                                                 <Settings className="w-4 h-4" /> Settings
+                                            </button>
+                                            <button onClick={() => {
+                                                navigator.clipboard.writeText(`retro-tui ${store.roomName}`)
+                                                setIsMenuOpen(false)
+                                                setCopied(true)
+                                                setTimeout(() => setCopied(false), 2000)
+                                            }} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-white/70 hover:bg-white/5 transition-colors">
+                                                <div className="w-4 h-4 flex items-center justify-center font-mono text-[10px] bg-white/10 rounded">&gt;_</div> Copy TUI Command
                                             </button>
                                             <div className="h-px bg-white/5 my-1" />
                                             <button onClick={() => { store.clearBoard(); setIsMenuOpen(false) }} className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors">
