@@ -2,12 +2,13 @@
   "name": "retro-board",
   "private": true,
   "version": "1.0.0",
-  "bin": "./pkg-wrapper.js",
+  "bin": "./pkg-wrapper.cjs",
   "pkg": {
     "targets": [
       "node18-macos-arm64"
     ],
     "assets": [
+      "pkg-wrapper.cjs",
       "tui-bundle.js",
       "node_modules/@roamhq/wrtc/build/**/*"
     ],
