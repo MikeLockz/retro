@@ -260,14 +260,19 @@ export function createRetroStore({
             ...actionCards.toArray(),
         ]
         return allCards.reduce((count, card) => {
-            let userVotes = 0
-            if (card.votedBy?.includes(userId)) userVotes++
-            if (card.reactions) {
-                Object.values(card.reactions).forEach(userIds => {
-                    if (userIds.includes(userId)) userVotes++
-                })
+            const votedOnThisCard = new Set()
+            if (card.votedBy?.includes(userId)) {
+                votedOnThisCard.add(card.id)
             }
-            return count + userVotes
+            if (card.reactions) {
+                for (const userIds of Object.values(card.reactions)) {
+                    if (userIds.includes(userId)) {
+                        votedOnThisCard.add(card.id)
+                        break 
+                    }
+                }
+            }
+            return count + votedOnThisCard.size
         }, 0)
     }
 

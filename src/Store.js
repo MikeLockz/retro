@@ -65,7 +65,7 @@ const store = createRetroStore({
         color: userColor,
     },
     platform: BrowserPlatform,
-    persistenceProvider: new IndexeddbPersistence(roomName, doc),
+    persistenceProvider: import.meta.hot?.data.indexeddbProvider || new IndexeddbPersistence(roomName, doc),
     existingDoc: doc,
     existingProvider,
     onAlert: (msg) => alert(msg),
@@ -93,6 +93,7 @@ store.userName = userName
 if (import.meta.hot) {
     import.meta.hot.data.doc = store.doc
     import.meta.hot.data.webrtcProvider = store.webrtcProvider
+    import.meta.hot.data.indexeddbProvider = store.persistenceProvider
     
     import.meta.hot.dispose(() => {
         store.destroy()

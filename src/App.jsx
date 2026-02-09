@@ -19,7 +19,11 @@ function App() {
     const [isTimerRunning, setIsTimerRunning] = useState(!!store.timer.get('startedAt'))
     const [theme, setTheme] = useState(() => {
         try {
-            return JSON.parse(localStorage.getItem('retro-settings-defaults'))?.theme || 'modern'
+            const settingsString = localStorage.getItem('retro-settings-defaults')
+            if (settingsString) {
+                return JSON.parse(settingsString)?.theme || 'modern'
+            }
+            return 'modern'
         } catch {
             return 'modern'
         }
@@ -284,7 +288,7 @@ function App() {
                                             <Settings className="w-5 h-5" /> SETTINGS
                                         </button>
                                         <button onClick={() => {
-                                            navigator.clipboard.writeText(`retro-tui ${store.roomName}`)
+                                            navigator.clipboard.writeText(`retro-tui '${store.roomName}'`)
                                             setIsMenuOpen(false)
                                             setCopied(true)
                                             setTimeout(() => setCopied(false), 2000)
@@ -351,7 +355,7 @@ function App() {
                                             <Settings className="w-4 h-4" /> CONFIG
                                         </button>
                                         <button onClick={() => {
-                                            navigator.clipboard.writeText(`retro-tui ${store.roomName}`)
+                                            navigator.clipboard.writeText(`retro-tui '${store.roomName}'`)
                                             setIsMenuOpen(false)
                                             setCopied(true)
                                             setTimeout(() => setCopied(false), 2000)
@@ -400,7 +404,7 @@ function App() {
                                                 <Settings className="w-4 h-4" /> Settings
                                             </button>
                                             <button onClick={() => {
-                                                navigator.clipboard.writeText(`retro-tui ${store.roomName}`)
+                                                navigator.clipboard.writeText(`retro-tui '${store.roomName}'`)
                                                 setIsMenuOpen(false)
                                                 setCopied(true)
                                                 setTimeout(() => setCopied(false), 2000)

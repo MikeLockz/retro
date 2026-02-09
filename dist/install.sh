@@ -27,6 +27,11 @@ esac
 # Get latest release version
 LATEST=$(curl -sL https://api.github.com/repos/MikeLockz/retro/releases/latest | grep '"tag_name"' | cut -d'"' -f4 || echo "latest")
 
+if [ -z "$LATEST" ]; then
+    echo "Error: Could not determine the latest release version."
+    exit 1
+fi
+
 echo "Installing RetroBoard TUI ${LATEST} for ${PLATFORM}..."
 
 # Download binary

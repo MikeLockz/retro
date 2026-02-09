@@ -36,12 +36,13 @@ const TuiApp = ({ roomName }) => {
       color: getRandomColor(),
     };
 
+    const signalingUrl = process.env.VITE_SIGNALING_URL || process.env.SIGNALING_URL;
     const newStore = createRetroStore({
       roomName,
       user,
       platform: NodePlatform,
       onAlert: (msg) => {}, 
-      signalingUrl: process.env.VITE_SIGNALING_URL
+      signalingUrl
     });
 
     setStore(newStore);
@@ -99,6 +100,12 @@ const TuiApp = ({ roomName }) => {
     return () => {
       clearInterval(timerInterval);
       unsubscribe();
+      newStore.awareness.off('change', updatePeerCount);
+      newStore.timer.unobserve(updateTimer);
+      newStore.kudosCards.unobserve(updateCards);
+      newStore.goodCards.unobserve(updateCards);
+      newStore.improveCards.unobserve(updateCards);
+      newStore.actionCards.unobserve(updateCards);
       newStore.destroy();
     };
   }, [roomName]);
@@ -107,6 +114,7 @@ const TuiApp = ({ roomName }) => {
   const columnCards = cards[currentColumn?.key] || [];
 
   useInput((input, key) => {
+    if (!store) return;
     if (key.escape || (key.ctrl && input === 'c')) {
       exit();
     }
@@ -115,7 +123,7 @@ const TuiApp = ({ roomName }) => {
       if (key.upArrow) {
         setSelectedIndex(prev => Math.max(0, prev - 1));
       }
-      if (key.downArrow) {
+      if (key.downArrow && columnCards.length > 0) {
         setSelectedIndex(prev => Math.min(columnCards.length - 1, prev + 1));
       }
       if (key.leftArrow) {
@@ -194,7 +202,7 @@ const TuiApp = ({ roomName }) => {
             <Box marginTop={1}>
                 <Text color="gray">USERS: </Text>
                 {presence.map((u, i) => (
-                    <Text key={u.id} color={u.colorClasses?.hex || 'white'}>
+                    <Text key={u.id} color={u.color || u.colorClasses?.hex || 'white'}>
                         {u.name}{i < presence.length - 1 ? ', ' : ''}
                     </Text>
                 ))}
