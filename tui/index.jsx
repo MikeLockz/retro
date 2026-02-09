@@ -11,6 +11,7 @@ const TuiApp = ({ roomName }) => {
   const { exit } = useApp();
   const [status, setStatus] = useState({ signaling: 'connecting' });
   const [peerCount, setPeerCount] = useState(0);
+  const [timerState, setTimerState] = useState({ active: false, remaining: 0 });
   const [cards, setCards] = useState([]);
   const [selectedColumnIndex, setSelectedColumnIndex] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -55,6 +56,21 @@ const TuiApp = ({ roomName }) => {
     newStore.awareness.on('change', updatePeerCount);
     updatePeerCount();
 
+    const updateTimer = () => {
+        const startedAt = newStore.timer.get('startedAt');
+        const duration = newStore.timer.get('duration');
+        if (startedAt && duration) {
+            const remaining = Math.max(0, (startedAt + duration) - Date.now());
+            setTimerState({ active: true, remaining });
+        } else {
+            setTimerState({ active: false, remaining: 0 });
+        }
+    };
+
+    newStore.timer.observe(updateTimer);
+    const timerInterval = setInterval(updateTimer, 1000);
+    updateTimer();
+
     const updateCards = () => {
         const getCards = (arr, type, ref) => arr.toArray().map(c => ({ ...c, type, ref }));
         const newCards = {
@@ -74,6 +90,7 @@ const TuiApp = ({ roomName }) => {
     updateCards();
 
     return () => {
+      clearInterval(timerInterval);
       unsubscribe();
       newStore.destroy();
     };
@@ -123,6 +140,15 @@ const TuiApp = ({ roomName }) => {
       if (input === 'r') {
           store.reconnect();
       }
+      if (input === 't') {
+          store.startTimer();
+      }
+      if (input === 'x') {
+          store.stopTimer();
+      }
+      if (input === 'c') {
+          store.clearBoard();
+      }
     } else if (mode === 'input' || mode === 'edit') {
       if (key.return) {
         if (inputValue.trim()) {
@@ -154,6 +180,11 @@ const TuiApp = ({ roomName }) => {
             <Text color="cyan" bold>{roomName.toUpperCase()}</Text>
         </Box>
         <Box>
+            {timerState.active && (
+                <Box marginRight={2}>
+                    <Text color="yellow" bold> ⏱ {Math.floor(timerState.remaining / 60000)}:{(Math.floor(timerState.remaining / 1000) % 60).toString().padStart(2, '0')} </Text>
+                </Box>
+            )}
             <Text color={status.signaling === 'connected' ? 'green' : 'yellow'}>
                 {status.signaling.toUpperCase()}
             </Text>
@@ -180,8 +211,9 @@ const TuiApp = ({ roomName }) => {
           <Text color="cyan" underline> </Text>
         </Box>
       ) : (
-        <Box marginBottom={1}>
-          <Text color="gray">Keys: [a] Add | [e] Edit | [d] Delete | [v] Vote | [r] Reconnect | [←/→] Column | [↑/↓] Navigate | [Esc] Exit</Text>
+        <Box marginBottom={1} flexDirection="column">
+          <Text color="gray">Keys: [a] Add | [e] Edit | [d] Delete | [v] Vote | [r] Reconnect | [c] Clear Board</Text>
+          <Text color="gray">      [t] Start Timer | [x] Stop Timer | [←/→] Column | [↑/↓] Navigate | [Esc] Exit</Text>
         </Box>
       )}
 
