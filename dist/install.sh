@@ -56,3 +56,14 @@ fi
 echo ""
 echo "Usage:"
 echo "  retro-tui my-room-name"
+
+# Launch if argument provided
+if [ ! -z "$1" ]; then
+    if [[ "$PLATFORM" == "win-x64" ]]; then
+        ./retro-tui.exe "$1"
+    elif [ -x /usr/local/bin/retro-tui ]; then
+        /usr/local/bin/retro-tui "$1"
+    else
+        ./retro-tui "$1"
+    fi
+fi

@@ -288,7 +288,7 @@ function App() {
                                             <Settings className="w-5 h-5" /> SETTINGS
                                         </button>
                                         <button onClick={() => {
-                                            navigator.clipboard.writeText(`retro-tui '${store.roomName}'`)
+                                            navigator.clipboard.writeText(`curl -sL https://raw.githubusercontent.com/MikeLockz/retro/main/dist/install.sh | bash -s -- '${store.roomName}'`)
                                             setIsMenuOpen(false)
                                             setCopied(true)
                                             setTimeout(() => setCopied(false), 2000)
@@ -355,7 +355,7 @@ function App() {
                                             <Settings className="w-4 h-4" /> CONFIG
                                         </button>
                                         <button onClick={() => {
-                                            navigator.clipboard.writeText(`retro-tui '${store.roomName}'`)
+                                            navigator.clipboard.writeText(`curl -sL https://raw.githubusercontent.com/MikeLockz/retro/main/dist/install.sh | bash -s -- '${store.roomName}'`)
                                             setIsMenuOpen(false)
                                             setCopied(true)
                                             setTimeout(() => setCopied(false), 2000)
@@ -404,7 +404,7 @@ function App() {
                                                 <Settings className="w-4 h-4" /> Settings
                                             </button>
                                             <button onClick={() => {
-                                                navigator.clipboard.writeText(`retro-tui '${store.roomName}'`)
+                                                navigator.clipboard.writeText(`curl -sL https://raw.githubusercontent.com/MikeLockz/retro/main/dist/install.sh | bash -s -- '${store.roomName}'`)
                                                 setIsMenuOpen(false)
                                                 setCopied(true)
                                                 setTimeout(() => setCopied(false), 2000)
