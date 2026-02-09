@@ -2,13 +2,13 @@
   "name": "retro-board",
   "private": true,
   "version": "1.0.0",
-  "bin": "./tui-bundle.cjs",
+  "bin": "./tui-bundle.mjs",
   "pkg": {
     "targets": [
       "node18-macos-arm64"
     ],
     "assets": [
-      "tui-bundle.cjs",
+      "tui-bundle.mjs",
       "node_modules/@roamhq/wrtc/build/**/*"
     ],
     "outputPath": "dist/binaries"
@@ -19,7 +19,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "tui": "tsx tui/index.jsx",
-    "build:tui": "esbuild tui/index.jsx --bundle --platform=node --target=node18 --format=cjs --outfile=tui-bundle.cjs --external:@roamhq/wrtc --external:react-devtools-core",
+    "build:tui": "esbuild tui/index.jsx --bundle --platform=node --target=node18 --format=esm --outfile=tui-bundle.mjs --external:@roamhq/wrtc --external:react-devtools-core",
     "build:tui-binary": "npm run build:tui && pkg . --compress GZip"
   },
   "dependencies": {
