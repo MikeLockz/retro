@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { render, Text, Box, useInput, useApp } from 'ink';
+import 'dotenv/config';
 import { createRetroStore } from '../src/core/createStore.js';
 import * as NodePlatform from '../src/core/platform/node.js';
 import { getRandomAnimal } from '../src/utils/animals.js';
@@ -36,6 +37,7 @@ const TuiApp = ({ roomName }) => {
       user,
       platform: NodePlatform,
       onAlert: (msg) => {}, 
+      signalingUrl: process.env.VITE_SIGNALING_URL
     });
 
     setStore(newStore);
@@ -46,12 +48,13 @@ const TuiApp = ({ roomName }) => {
 
     const updateCards = () => {
         const getCards = (arr, type, ref) => arr.toArray().map(c => ({ ...c, type, ref }));
-        setCards({
+        const newCards = {
             kudos: getCards(newStore.kudosCards, 'kudos', newStore.kudosCards),
             good: getCards(newStore.goodCards, 'good', newStore.goodCards),
             improve: getCards(newStore.improveCards, 'improve', newStore.improveCards),
             action: getCards(newStore.actionCards, 'action', newStore.actionCards),
-        });
+        };
+        setCards(newCards);
     };
 
     newStore.kudosCards.observe(updateCards);

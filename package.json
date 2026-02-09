@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@roamhq/wrtc": "^0.9.1",
+    "dotenv": "^17.2.4",
     "ink": "^4.4.1",
     "lucide-react": "^0.468.0",
     "react": "^18.3.1",

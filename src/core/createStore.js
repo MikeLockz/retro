@@ -3,12 +3,6 @@ import { WebrtcProvider } from 'y-webrtc'
 
 export const VOTE_TYPES = ['👍', '❓', '❤️']
 
-const DEFAULT_SIGNALING_SERVERS = [
-    'wss://signaling.yjs.dev',
-    'wss://y-webrtc-signaling-eu.herokuapp.com',
-    'wss://y-webrtc-signaling-us.herokuapp.com'
-]
-
 const RETRY_CONFIG = {
     maxRetries: 5,
     baseDelay: 1000,
@@ -71,11 +65,12 @@ export function createRetroStore({
     let webrtcProvider = existingProvider
 
     // Signaling
-    const SIGNALING_SERVERS = signalingUrl ? [signalingUrl] : DEFAULT_SIGNALING_SERVERS
+    const SIGNALING_SERVERS = signalingUrl ? [signalingUrl] : []
 
     function createWebrtcProvider() {
         const providerOpts = {
             signaling: SIGNALING_SERVERS.filter(s => !!s),
+            filterBcConns: false, // Ensure BC works even in Node
         }
         
         // Inject platform-specific WebRTC implementation if provided
@@ -102,7 +97,7 @@ export function createRetroStore({
         })
 
         provider.on('peers', ({ webrtcPeers, bcPeers }) => {
-            console.log(`[y-webrtc] Peers: ${webrtcPeers.size} WebRTC, ${bcPeers.size} BC`)
+            // Peer count tracking handled via connectionStatus if needed
         })
 
         provider.on('synced', ({ synced }) => {
