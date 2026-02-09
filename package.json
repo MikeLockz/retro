@@ -8,6 +8,7 @@
       "node18-macos-arm64"
     ],
     "assets": [
+      "tui-bundle.js",
       "node_modules/@roamhq/wrtc/build/**/*"
     ],
     "outputPath": "dist/binaries"
