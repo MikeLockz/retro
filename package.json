@@ -18,7 +18,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "tui": "tsx tui/index.jsx",
-    "build:tui": "esbuild tui/index.jsx --bundle --platform=node --target=node18 --format=esm --outfile=tui-bundle.js --banner:js=\"#!/usr/bin/env node\" --external:@roamhq/wrtc --external:react-devtools-core",
+    "build:tui": "esbuild tui/index.jsx --bundle --platform=node --target=node18 --format=esm --outfile=tui-bundle.js --banner:js=\"#!/usr/bin/env node\" --define:process.env.NODE_ENV='\"production\"' --minify --external:@roamhq/wrtc --alias:react-devtools-core=./tui/empty.js",
     "build:tui-binary": "npm run build:tui && pkg . --compress GZip"
   },
   "dependencies": {
