@@ -1,3 +1,4 @@
+import * as Y from 'yjs'
 import { createRetroStore, VOTE_TYPES } from './core/createStore'
 import * as BrowserPlatform from './core/platform/browser'
 import { getRandomAnimal } from './utils/animals'
@@ -19,11 +20,12 @@ function getRoomName() {
 
 // Persist state across HMR
 const roomName = import.meta.hot?.data.roomName || getRoomName()
-const existingDoc = import.meta.hot?.data.doc
+const doc = import.meta.hot?.data.doc || new Y.Doc()
 const existingProvider = import.meta.hot?.data.webrtcProvider
 
 if (import.meta.hot) {
     import.meta.hot.data.roomName = roomName
+    import.meta.hot.data.doc = doc
 }
 
 // Local storage for settings defaults
@@ -63,8 +65,8 @@ const store = createRetroStore({
         color: userColor,
     },
     platform: BrowserPlatform,
-    persistenceProvider: new IndexeddbPersistence(roomName, existingDoc), // Let createRetroStore attach handler
-    existingDoc,
+    persistenceProvider: new IndexeddbPersistence(roomName, doc),
+    existingDoc: doc,
     existingProvider,
     onAlert: (msg) => alert(msg),
     onConfirm: (msg) => confirm(msg),

@@ -489,7 +489,7 @@ function App() {
                                     <div>
                                         <label className="block text-xs font-bold text-cyan-500 uppercase tracking-widest mb-2">VOTE_LIMIT_PROTOCOL</label>
                                         <input type="number" min="1" max="99" value={maxVotes} onChange={(e) => setMaxVotes(e.target.value)} className="w-full bg-black border border-cyan-500 text-cyan-400 font-mono text-sm px-4 py-3 focus:outline-none focus:shadow-[0_0_15px_rgba(6,182,212,0.5)] transition-all" placeholder="Enter value..." />
-                                        <p className="mt-2 text-[10px] text-cyan-600 font-mono uppercase tracking-widest">>> RESTRICTS_INPUT_PER_USER_NODE</p>
+                                        <p className="mt-2 text-[10px] text-cyan-600 font-mono uppercase tracking-widest">&gt;&gt; RESTRICTS_INPUT_PER_USER_NODE</p>
                                     </div>
                                     <div className="pt-6 border-t border-white/10">
                                         <div className="flex items-center justify-between mb-4">
