@@ -20,7 +20,7 @@ function getRoomName() {
 
 // Persist state across HMR
 const roomName = import.meta.hot?.data.roomName || getRoomName()
-const doc = import.meta.hot?.data.doc || new Y.Doc()
+const doc = import.meta.hot?.data.doc || new Y.Doc({ guid: roomName })
 const existingProvider = import.meta.hot?.data.webrtcProvider
 
 if (import.meta.hot) {

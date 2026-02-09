@@ -21,7 +21,7 @@ export function createRetroStore({
     existingDoc = null,
     existingProvider = null
 }) {
-    const doc = existingDoc || new Y.Doc()
+    const doc = existingDoc || new Y.Doc({ guid: roomName })
     
     // Shared types
     const kudosCards = doc.getArray('kudos')
