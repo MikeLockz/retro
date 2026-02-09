@@ -20,6 +20,7 @@ export function createRetroStore({
     user, // { id, name, color }
     platform = {}, // { RTCPeerConnection, ... }
     persistenceProvider = null, // e.g. IndexeddbPersistence instance
+    ProviderClass = WebrtcProvider, // Allow dependency injection
     signalingUrl = null,
     onAlert = (msg) => console.log('Alert:', msg),
     onConfirm = (msg) => { console.log('Confirm:', msg); return true; },
@@ -88,7 +89,7 @@ export function createRetroStore({
             }
         }
 
-        const provider = new WebrtcProvider(roomName, doc, providerOpts)
+        const provider = new ProviderClass(roomName, doc, providerOpts)
 
         provider.on('status', ({ connected }) => {
             console.log(`[y-webrtc] Status changed: ${connected ? 'connected' : 'disconnected'}`)
