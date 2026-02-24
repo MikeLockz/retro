@@ -86,6 +86,7 @@ if (!store.settings.has('timerDuration')) {
 
 // Attach extra helper to match previous API
 store.saveLocalSettings = saveLocalSettings
+store.userId = userId
 store.userColor = userColor // Expose for UI if needed
 store.userName = userName
 
@@ -94,7 +95,7 @@ if (import.meta.hot) {
     import.meta.hot.data.doc = store.doc
     import.meta.hot.data.webrtcProvider = store.webrtcProvider
     import.meta.hot.data.indexeddbProvider = store.persistenceProvider
-    
+
     import.meta.hot.dispose(() => {
         store.destroy()
     })
