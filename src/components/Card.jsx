@@ -178,7 +178,7 @@ function Card({ card, columnArray, columnKey, theme }) {
 
     if (isSynth) {
         const getCardColorClasses = () => {
-             switch (columnKey) {
+            switch (columnKey) {
                 case 'kudos': return { border: 'border-synth-cyan', text: 'text-synth-cyan', glow: 'shadow-synth-cyan/20' }
                 case 'good': return { border: 'border-synth-cyan', text: 'text-synth-cyan', glow: 'shadow-synth-cyan/20' }
                 case 'improve': return { border: 'border-synth-magenta', text: 'text-synth-magenta', glow: 'shadow-synth-magenta/20' }
@@ -190,12 +190,11 @@ function Card({ card, columnArray, columnKey, theme }) {
         const themeClasses = getCardColorClasses()
 
         return (
-            <div 
-                className={`group relative p-4 bg-black border ${themeClasses.border} rounded-[2px] transition-all duration-300 ${
-                    isEditing 
-                        ? 'scale-[1.02] shadow-[0_0_20px_rgba(255,255,255,0.2)] z-50 ring-1 ring-white/50' 
+            <div
+                className={`group relative p-4 bg-black border ${themeClasses.border} rounded-[2px] transition-all duration-300 ${isEditing
+                        ? 'scale-[1.02] shadow-[0_0_20px_rgba(255,255,255,0.2)] z-50 ring-1 ring-white/50'
                         : `hover:-translate-y-1 ${themeClasses.glow} z-0`
-                }`}
+                    }`}
                 data-card-id={card.id}
             >
                 {/* Draft indicator */}
@@ -237,8 +236,8 @@ function Card({ card, columnArray, columnKey, theme }) {
                         </div>
                     ) : (
                         <p
-                            onClick={() => setIsEditing(true)}
-                            className="text-white cursor-text min-h-[60px] whitespace-pre-wrap font-mono text-sm font-medium leading-relaxed"
+                            onClick={() => { if (!typingUser) setIsEditing(true) }}
+                            className={`text-white min-h-[60px] whitespace-pre-wrap font-mono text-sm font-medium leading-relaxed ${typingUser ? 'cursor-not-allowed opacity-60' : 'cursor-text'}`}
                         >
                             {displayText || <span className="text-white/40 italic font-sans font-bold">{'>'} [NODE_EMPTY]</span>}
                         </p>
@@ -270,21 +269,20 @@ function Card({ card, columnArray, columnKey, theme }) {
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/20">
                     <div className="flex items-center gap-1.5 flex-wrap">
                         {VOTE_TYPES.map(emoji => {
-                            const reactionCount = (card.reactions?.[emoji]?.length || 0) + 
+                            const reactionCount = (card.reactions?.[emoji]?.length || 0) +
                                 (emoji === '👍' && card.votedBy?.length ? card.votedBy.length : 0)
-                            
-                            const hasReacted = card.reactions?.[emoji]?.includes(store.userId) || 
+
+                            const hasReacted = card.reactions?.[emoji]?.includes(store.userId) ||
                                 (emoji === '👍' && card.votedBy?.includes(store.userId))
 
                             return (
                                 <button
                                     key={emoji}
                                     onClick={() => handleVote(emoji)}
-                                    className={`flex items-center gap-1 px-1.5 py-0.5 transition-all text-[11px] font-mono border active:scale-150 duration-200 font-bold ${
-                                        hasReacted
+                                    className={`flex items-center gap-1 px-1.5 py-0.5 transition-all text-[11px] font-mono border active:scale-150 duration-200 font-bold ${hasReacted
                                             ? `${themeClasses.border} bg-black text-white shadow-[0_0_5px_currentColor]`
                                             : 'border-white/20 bg-transparent text-white/60 hover:text-white hover:border-white/50'
-                                    }`}
+                                        }`}
                                     aria-label={`Vote ${emoji}`}
                                 >
                                     <span>{emoji}</span>
@@ -321,12 +319,11 @@ function Card({ card, columnArray, columnKey, theme }) {
         const noteColor = getNoteColor()
 
         return (
-            <div 
-                className={`group relative p-6 retro-sticky ${noteColor} transition-all duration-200 flex flex-col justify-between ${
-                    isEditing 
-                        ? 'scale-105 shadow-2xl z-50 ring-4 ring-[#2D1B0E]/40 brightness-110' 
+            <div
+                className={`group relative p-6 retro-sticky ${noteColor} transition-all duration-200 flex flex-col justify-between ${isEditing
+                        ? 'scale-105 shadow-2xl z-50 ring-4 ring-[#2D1B0E]/40 brightness-110'
                         : 'z-0'
-                }`}
+                    }`}
                 style={{ transform: isEditing ? 'none' : `rotate(${rotation}deg)` }}
                 data-card-id={card.id}
             >
@@ -367,8 +364,8 @@ function Card({ card, columnArray, columnKey, theme }) {
                         />
                     ) : (
                         <p
-                            onClick={() => setIsEditing(true)}
-                            className="text-inherit cursor-text min-h-[100px] whitespace-pre-wrap font-bold text-lg leading-tight break-words"
+                            onClick={() => { if (!typingUser) setIsEditing(true) }}
+                            className={`text-inherit min-h-[100px] whitespace-pre-wrap font-bold text-lg leading-tight break-words ${typingUser ? 'cursor-not-allowed opacity-60' : 'cursor-text'}`}
                         >
                             {displayText || <span className="opacity-30 italic">Click to edit...</span>}
                         </p>
@@ -409,21 +406,20 @@ function Card({ card, columnArray, columnKey, theme }) {
                     {/* Vote buttons */}
                     <div className="flex items-center gap-2 flex-wrap">
                         {VOTE_TYPES.map(emoji => {
-                            const reactionCount = (card.reactions?.[emoji]?.length || 0) + 
+                            const reactionCount = (card.reactions?.[emoji]?.length || 0) +
                                 (emoji === '👍' && card.votedBy?.length ? card.votedBy.length : 0)
-                            
-                            const hasReacted = card.reactions?.[emoji]?.includes(store.userId) || 
+
+                            const hasReacted = card.reactions?.[emoji]?.includes(store.userId) ||
                                 (emoji === '👍' && card.votedBy?.includes(store.userId))
 
                             return (
                                 <button
                                     key={emoji}
                                     onClick={() => handleVote(emoji)}
-                                    className={`flex items-center gap-1.5 px-2 py-1 transition-all text-xs font-black border-2 ${
-                                        hasReacted
+                                    className={`flex items-center gap-1.5 px-2 py-1 transition-all text-xs font-black border-2 ${hasReacted
                                             ? 'bg-[#2D1B0E] text-white border-white'
                                             : 'bg-white/20 text-current hover:bg-white/40 border-transparent'
-                                    }`}
+                                        }`}
                                     title={`Vote ${emoji}`}
                                 >
                                     <span>{emoji}</span>
@@ -479,8 +475,8 @@ function Card({ card, columnArray, columnKey, theme }) {
                 />
             ) : (
                 <p
-                    onClick={() => setIsEditing(true)}
-                    className="text-white/90 cursor-text min-h-[60px] whitespace-pre-wrap"
+                    onClick={() => { if (!typingUser) setIsEditing(true) }}
+                    className={`text-white/90 min-h-[60px] whitespace-pre-wrap ${typingUser ? 'cursor-not-allowed opacity-60' : 'cursor-text'}`}
                 >
                     {displayText || <span className="text-white/30 italic">Click to edit...</span>}
                 </p>
@@ -520,21 +516,20 @@ function Card({ card, columnArray, columnKey, theme }) {
                 {/* Vote buttons */}
                 <div className="flex items-center gap-1.5 flex-wrap">
                     {VOTE_TYPES.map(emoji => {
-                        const reactionCount = (card.reactions?.[emoji]?.length || 0) + 
+                        const reactionCount = (card.reactions?.[emoji]?.length || 0) +
                             (emoji === '👍' && card.votedBy?.length ? card.votedBy.length : 0)
-                        
-                        const hasReacted = card.reactions?.[emoji]?.includes(store.userId) || 
+
+                        const hasReacted = card.reactions?.[emoji]?.includes(store.userId) ||
                             (emoji === '👍' && card.votedBy?.includes(store.userId))
 
                         return (
                             <button
                                 key={emoji}
                                 onClick={() => handleVote(emoji)}
-                                className={`flex items-center gap-1.5 px-2 py-1 rounded-md transition-all text-xs ${
-                                    hasReacted
+                                className={`flex items-center gap-1.5 px-2 py-1 rounded-md transition-all text-xs ${hasReacted
                                         ? 'bg-indigo-500/30 text-indigo-300 border border-indigo-500/50'
                                         : 'bg-white/5 text-white/50 hover:text-white/80 hover:bg-white/10 border border-transparent'
-                                }`}
+                                    }`}
                                 title={`Vote ${emoji}`}
                             >
                                 <span>{emoji}</span>

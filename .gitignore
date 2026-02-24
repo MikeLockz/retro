@@ -4,6 +4,8 @@ node_modules/
 # Build output
 dist/
 !dist/install.sh
+tui-bundle.js
+tui-bundle.mjs
 
 # IDE
 .vscode/
