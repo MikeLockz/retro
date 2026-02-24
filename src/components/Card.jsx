@@ -1,13 +1,16 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Trash2, Image as ImageIcon } from 'lucide-react'
 import store, { VOTE_TYPES } from '../Store'
+
 import { useYText } from '../hooks/useYText'
 
 function Card({ card, columnArray, columnKey, theme }) {
     // Use Y.Text hook for collaborative editing
     const { yText, text, updateText, isReady } = useYText(card.textId)
 
-    const [isEditing, setIsEditing] = useState(!card.isCommitted)
+    const [isEditing, setIsEditing] = useState(
+        !card.isCommitted && card.createdBy === store.userId
+    )
     const [typingUser, setTypingUser] = useState(null)
     const [isProcessingImage, setIsProcessingImage] = useState(false)
     const textareaRef = useRef(null)
@@ -192,8 +195,8 @@ function Card({ card, columnArray, columnKey, theme }) {
         return (
             <div
                 className={`group relative p-4 bg-black border ${themeClasses.border} rounded-[2px] transition-all duration-300 ${isEditing
-                        ? 'scale-[1.02] shadow-[0_0_20px_rgba(255,255,255,0.2)] z-50 ring-1 ring-white/50'
-                        : `hover:-translate-y-1 ${themeClasses.glow} z-0`
+                    ? 'scale-[1.02] shadow-[0_0_20px_rgba(255,255,255,0.2)] z-50 ring-1 ring-white/50'
+                    : `hover:-translate-y-1 ${themeClasses.glow} z-0`
                     }`}
                 data-card-id={card.id}
             >
@@ -236,7 +239,11 @@ function Card({ card, columnArray, columnKey, theme }) {
                         </div>
                     ) : (
                         <p
-                            onClick={() => { if (!typingUser) setIsEditing(true) }}
+                            onClick={() => {
+                                if (!typingUser && (card.isCommitted || card.createdBy === store.userId)) {
+                                    setIsEditing(true)
+                                }
+                            }}
                             className={`text-white min-h-[60px] whitespace-pre-wrap font-mono text-sm font-medium leading-relaxed ${typingUser ? 'cursor-not-allowed opacity-60' : 'cursor-text'}`}
                         >
                             {displayText || <span className="text-white/40 italic font-sans font-bold">{'>'} [NODE_EMPTY]</span>}
@@ -280,8 +287,8 @@ function Card({ card, columnArray, columnKey, theme }) {
                                     key={emoji}
                                     onClick={() => handleVote(emoji)}
                                     className={`flex items-center gap-1 px-1.5 py-0.5 transition-all text-[11px] font-mono border active:scale-150 duration-200 font-bold ${hasReacted
-                                            ? `${themeClasses.border} bg-black text-white shadow-[0_0_5px_currentColor]`
-                                            : 'border-white/20 bg-transparent text-white/60 hover:text-white hover:border-white/50'
+                                        ? `${themeClasses.border} bg-black text-white shadow-[0_0_5px_currentColor]`
+                                        : 'border-white/20 bg-transparent text-white/60 hover:text-white hover:border-white/50'
                                         }`}
                                     aria-label={`Vote ${emoji}`}
                                 >
@@ -321,8 +328,8 @@ function Card({ card, columnArray, columnKey, theme }) {
         return (
             <div
                 className={`group relative p-6 retro-sticky ${noteColor} transition-all duration-200 flex flex-col justify-between ${isEditing
-                        ? 'scale-105 shadow-2xl z-50 ring-4 ring-[#2D1B0E]/40 brightness-110'
-                        : 'z-0'
+                    ? 'scale-105 shadow-2xl z-50 ring-4 ring-[#2D1B0E]/40 brightness-110'
+                    : 'z-0'
                     }`}
                 style={{ transform: isEditing ? 'none' : `rotate(${rotation}deg)` }}
                 data-card-id={card.id}
@@ -364,7 +371,11 @@ function Card({ card, columnArray, columnKey, theme }) {
                         />
                     ) : (
                         <p
-                            onClick={() => { if (!typingUser) setIsEditing(true) }}
+                            onClick={() => {
+                                if (!typingUser && (card.isCommitted || card.createdBy === store.userId)) {
+                                    setIsEditing(true)
+                                }
+                            }}
                             className={`text-inherit min-h-[100px] whitespace-pre-wrap font-bold text-lg leading-tight break-words ${typingUser ? 'cursor-not-allowed opacity-60' : 'cursor-text'}`}
                         >
                             {displayText || <span className="opacity-30 italic">Click to edit...</span>}
@@ -417,8 +428,8 @@ function Card({ card, columnArray, columnKey, theme }) {
                                     key={emoji}
                                     onClick={() => handleVote(emoji)}
                                     className={`flex items-center gap-1.5 px-2 py-1 transition-all text-xs font-black border-2 ${hasReacted
-                                            ? 'bg-[#2D1B0E] text-white border-white'
-                                            : 'bg-white/20 text-current hover:bg-white/40 border-transparent'
+                                        ? 'bg-[#2D1B0E] text-white border-white'
+                                        : 'bg-white/20 text-current hover:bg-white/40 border-transparent'
                                         }`}
                                     title={`Vote ${emoji}`}
                                 >
@@ -475,7 +486,11 @@ function Card({ card, columnArray, columnKey, theme }) {
                 />
             ) : (
                 <p
-                    onClick={() => { if (!typingUser) setIsEditing(true) }}
+                    onClick={() => {
+                        if (!typingUser && (card.isCommitted || card.createdBy === store.userId)) {
+                            setIsEditing(true)
+                        }
+                    }}
                     className={`text-white/90 min-h-[60px] whitespace-pre-wrap ${typingUser ? 'cursor-not-allowed opacity-60' : 'cursor-text'}`}
                 >
                     {displayText || <span className="text-white/30 italic">Click to edit...</span>}
@@ -527,8 +542,8 @@ function Card({ card, columnArray, columnKey, theme }) {
                                 key={emoji}
                                 onClick={() => handleVote(emoji)}
                                 className={`flex items-center gap-1.5 px-2 py-1 rounded-md transition-all text-xs ${hasReacted
-                                        ? 'bg-indigo-500/30 text-indigo-300 border border-indigo-500/50'
-                                        : 'bg-white/5 text-white/50 hover:text-white/80 hover:bg-white/10 border border-transparent'
+                                    ? 'bg-indigo-500/30 text-indigo-300 border border-indigo-500/50'
+                                    : 'bg-white/5 text-white/50 hover:text-white/80 hover:bg-white/10 border border-transparent'
                                     }`}
                                 title={`Vote ${emoji}`}
                             >
