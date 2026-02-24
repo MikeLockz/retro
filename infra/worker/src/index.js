@@ -16,12 +16,11 @@ export class SignalingRoom {
         this.ipCounts = new Map(); // Map<IP, Count>
         // Track which socket belongs to which IP for cleanup
         this.socketToIp = new Map(); // Map<WebSocket, IP>
+        // Track topic subscriptions per socket for y-webrtc pub/sub protocol
+        this.subscriptions = new Map(); // Map<WebSocket, Set<string>>
 
         // Max connections per IP per room
         this.MAX_CONNS_PER_IP = 20;
-
-        // Restore state if needed (though for simple rate limiting, in-memory is usually fine 
-        // as DOs stay alive while connected)
     }
 
     async fetch(request) {
@@ -48,8 +47,7 @@ export class SignalingRoom {
         // Update tracking
         this.ipCounts.set(clientIp, currentCount + 1);
         this.socketToIp.set(server, clientIp);
-
-        // Clean up closed sockets automatically handled by webSocketClose
+        this.subscriptions.set(server, new Set());
 
         return new Response(null, {
             status: 101,
@@ -58,24 +56,67 @@ export class SignalingRoom {
     }
 
     // Called when a WebSocket receives a message
+    // Implements the y-webrtc signaling protocol: subscribe, unsubscribe, publish, ping
     async webSocketMessage(ws, message) {
-        // Get all connected WebSockets in this room
-        const sockets = this.state.getWebSockets();
+        let msg;
+        try {
+            msg = JSON.parse(typeof message === 'string' ? message : new TextDecoder().decode(message));
+        } catch {
+            return; // Ignore non-JSON messages
+        }
 
-        // Broadcast to everyone except the sender
-        for (const socket of sockets) {
-            if (socket !== ws) {
-                try {
-                    socket.send(message);
-                } catch (err) {
-                    // Socket might be closed, ignore
+        switch (msg.type) {
+            case 'subscribe': {
+                const topics = this.subscriptions.get(ws);
+                if (topics && Array.isArray(msg.topics)) {
+                    msg.topics.forEach(topic => topics.add(topic));
                 }
+                break;
+            }
+            case 'unsubscribe': {
+                const topics = this.subscriptions.get(ws);
+                if (topics && Array.isArray(msg.topics)) {
+                    msg.topics.forEach(topic => topics.delete(topic));
+                }
+                break;
+            }
+            case 'publish': {
+                // Forward to all sockets subscribed to this topic (except sender)
+                const topic = msg.topic;
+                if (typeof topic !== 'string') break;
+
+                const sockets = this.state.getWebSockets();
+                const payload = JSON.stringify(msg);
+
+                for (const socket of sockets) {
+                    if (socket === ws) continue;
+                    const subTopics = this.subscriptions.get(socket);
+                    if (subTopics && subTopics.has(topic)) {
+                        try {
+                            socket.send(payload);
+                        } catch (err) {
+                            // Socket might be closed, ignore
+                        }
+                    }
+                }
+                break;
+            }
+            case 'ping': {
+                try {
+                    ws.send(JSON.stringify({ type: 'pong' }));
+                } catch (err) {
+                    // Ignore send errors
+                }
+                break;
             }
         }
     }
 
     // Called when a WebSocket is closed
     async webSocketClose(ws, code, reason, wasClean) {
+        // Clean up subscriptions
+        this.subscriptions.delete(ws);
+
         // Decrease count for this IP
         const ip = this.socketToIp.get(ws);
         if (ip) {
@@ -83,24 +124,18 @@ export class SignalingRoom {
             if (currentCount > 0) {
                 this.ipCounts.set(ip, currentCount - 1);
             }
-            // If count is 0, we can delete the key to save memory, 
-            // but keeping it is also fine for recent history tracking if we wanted.
             if (this.ipCounts.get(ip) === 0) {
                 this.ipCounts.delete(ip);
             }
-
-            // Clean up socket mapping
             this.socketToIp.delete(ws);
         }
 
-        // Durable Objects automatically clean up closed sockets
         console.log(`WebSocket closed: code=${code}, reason=${reason}`);
     }
 
     // Called when a WebSocket errors
     async webSocketError(ws, error) {
         console.error('WebSocket error:', error);
-        // Error usually leads to close, so logic is handled there
     }
 }
 
