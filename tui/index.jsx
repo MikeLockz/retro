@@ -7,6 +7,10 @@ import { getRandomAnimal } from '../src/utils/animals.js';
 import { getRandomColor } from '../src/utils/colors.js';
 import TuiCard from './components/TuiCard.jsx';
 
+// Hardcoded fallback ensures TUI always uses the same signaling server as the browser,
+// even when no .env file is present (e.g., running via npx or bundled binary).
+const DEFAULT_SIGNALING_URL = 'wss://retro-signaling-server.lockdev.workers.dev';
+
 const TuiApp = ({ roomName }) => {
   const { exit } = useApp();
   const [status, setStatus] = useState({ signaling: 'connecting' });
@@ -36,12 +40,12 @@ const TuiApp = ({ roomName }) => {
       color: getRandomColor(),
     };
 
-    const signalingUrl = process.env.VITE_SIGNALING_URL || process.env.SIGNALING_URL;
+    const signalingUrl = process.env.VITE_SIGNALING_URL || process.env.SIGNALING_URL || DEFAULT_SIGNALING_URL;
     const newStore = createRetroStore({
       roomName,
       user,
       platform: NodePlatform,
-      onAlert: (msg) => {}, 
+      onAlert: (msg) => { },
       signalingUrl
     });
 
@@ -52,27 +56,27 @@ const TuiApp = ({ roomName }) => {
     });
 
     const updatePeerCount = () => {
-        const states = newStore.awareness.getStates();
-        setPeerCount(states.size);
-        
-        const users = Array.from(states.values())
-            .filter(s => s.user)
-            .map(s => s.user);
-        setPresence(users);
+      const states = newStore.awareness.getStates();
+      setPeerCount(states.size);
+
+      const users = Array.from(states.values())
+        .filter(s => s.user)
+        .map(s => s.user);
+      setPresence(users);
     };
 
     newStore.awareness.on('change', updatePeerCount);
     updatePeerCount();
 
     const updateTimer = () => {
-        const startedAt = newStore.timer.get('startedAt');
-        const duration = newStore.timer.get('duration');
-        if (startedAt && duration) {
-            const remaining = Math.max(0, (startedAt + duration) - Date.now());
-            setTimerState({ active: true, remaining });
-        } else {
-            setTimerState({ active: false, remaining: 0 });
-        }
+      const startedAt = newStore.timer.get('startedAt');
+      const duration = newStore.timer.get('duration');
+      if (startedAt && duration) {
+        const remaining = Math.max(0, (startedAt + duration) - Date.now());
+        setTimerState({ active: true, remaining });
+      } else {
+        setTimerState({ active: false, remaining: 0 });
+      }
     };
 
     newStore.timer.observe(updateTimer);
@@ -80,14 +84,14 @@ const TuiApp = ({ roomName }) => {
     updateTimer();
 
     const updateCards = () => {
-        const getCards = (arr, type, ref) => arr.toArray().map(c => ({ ...c, type, ref }));
-        const newCards = {
-            kudos: getCards(newStore.kudosCards, 'kudos', newStore.kudosCards),
-            good: getCards(newStore.goodCards, 'good', newStore.goodCards),
-            improve: getCards(newStore.improveCards, 'improve', newStore.improveCards),
-            action: getCards(newStore.actionCards, 'action', newStore.actionCards),
-        };
-        setCards(newCards);
+      const getCards = (arr, type, ref) => arr.toArray().map(c => ({ ...c, type, ref }));
+      const newCards = {
+        kudos: getCards(newStore.kudosCards, 'kudos', newStore.kudosCards),
+        good: getCards(newStore.goodCards, 'good', newStore.goodCards),
+        improve: getCards(newStore.improveCards, 'improve', newStore.improveCards),
+        action: getCards(newStore.actionCards, 'action', newStore.actionCards),
+      };
+      setCards(newCards);
     };
 
     newStore.kudosCards.observe(updateCards);
@@ -153,16 +157,16 @@ const TuiApp = ({ roomName }) => {
         store.deleteCard(card.ref, card.id);
       }
       if (input === 'r') {
-          store.reconnect();
+        store.reconnect();
       }
       if (input === 't') {
-          store.startTimer();
+        store.startTimer();
       }
       if (input === 'x') {
-          store.stopTimer();
+        store.stopTimer();
       }
       if (input === 'c') {
-          store.clearBoard();
+        store.clearBoard();
       }
       if (input === '1') setSelectedColumnIndex(0);
       if (input === '2') setSelectedColumnIndex(1);
@@ -194,42 +198,42 @@ const TuiApp = ({ roomName }) => {
     <Box flexDirection="column" padding={1}>
       <Box borderStyle="double" borderColor="cyan" paddingX={2} marginBottom={1} justifyContent="space-between">
         <Box flexDirection="column">
-            <Box>
-                <Text color="magenta" bold italic> RETRO_SYSTEM </Text>
-                <Text color="white"> | Room: </Text>
-                <Text color="cyan" bold>{roomName.toUpperCase()}</Text>
-            </Box>
-            <Box marginTop={1}>
-                <Text color="gray">USERS: </Text>
-                {presence.map((u, i) => (
-                    <Text key={u.id} color={u.color || u.colorClasses?.hex || 'white'}>
-                        {u.name}{i < presence.length - 1 ? ', ' : ''}
-                    </Text>
-                ))}
-            </Box>
+          <Box>
+            <Text color="magenta" bold italic> RETRO_SYSTEM </Text>
+            <Text color="white"> | Room: </Text>
+            <Text color="cyan" bold>{roomName.toUpperCase()}</Text>
+          </Box>
+          <Box marginTop={1}>
+            <Text color="gray">USERS: </Text>
+            {presence.map((u, i) => (
+              <Text key={u.id} color={u.color || u.colorClasses?.hex || 'white'}>
+                {u.name}{i < presence.length - 1 ? ', ' : ''}
+              </Text>
+            ))}
+          </Box>
         </Box>
         <Box flexDirection="column" alignItems="flex-end">
-            {timerState.active && (
-                <Box marginRight={2}>
-                    <Text color="yellow" bold> ⏱ {Math.floor(timerState.remaining / 60000)}:{(Math.floor(timerState.remaining / 1000) % 60).toString().padStart(2, '0')} </Text>
-                </Box>
-            )}
-            <Text color={status.signaling === 'connected' ? 'green' : 'yellow'}>
-                {status.signaling.toUpperCase()}
-            </Text>
-            <Text color="white"> | Peers: </Text>
-            <Text color="cyan">{peerCount}</Text>
-            {status.synced && <Text color="cyan"> [SYNCED]</Text>}
+          {timerState.active && (
+            <Box marginRight={2}>
+              <Text color="yellow" bold> ⏱ {Math.floor(timerState.remaining / 60000)}:{(Math.floor(timerState.remaining / 1000) % 60).toString().padStart(2, '0')} </Text>
+            </Box>
+          )}
+          <Text color={status.signaling === 'connected' ? 'green' : 'yellow'}>
+            {status.signaling.toUpperCase()}
+          </Text>
+          <Text color="white"> | Peers: </Text>
+          <Text color="cyan">{peerCount}</Text>
+          {status.synced && <Text color="cyan"> [SYNCED]</Text>}
         </Box>
       </Box>
 
       <Box marginBottom={1}>
         {columns.map((col, i) => (
-            <Box key={col.key} marginRight={2} borderStyle={i === selectedColumnIndex ? 'bold' : 'single'} borderColor={i === selectedColumnIndex ? col.color : 'gray'} paddingX={1}>
-                <Text color={i === selectedColumnIndex ? col.color : 'white'} bold={i === selectedColumnIndex}>
-                    [{i + 1}] {col.label} ({cards[col.key]?.length || 0})
-                </Text>
-            </Box>
+          <Box key={col.key} marginRight={2} borderStyle={i === selectedColumnIndex ? 'bold' : 'single'} borderColor={i === selectedColumnIndex ? col.color : 'gray'} paddingX={1}>
+            <Text color={i === selectedColumnIndex ? col.color : 'white'} bold={i === selectedColumnIndex}>
+              [{i + 1}] {col.label} ({cards[col.key]?.length || 0})
+            </Text>
+          </Box>
         ))}
       </Box>
 
